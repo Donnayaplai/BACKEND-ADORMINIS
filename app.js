@@ -13,6 +13,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+const router = require('./routes');
+app.use('/api', router);
+
 app.get('/', (req, res) => {
   res.json({
     message: 'API Running',
