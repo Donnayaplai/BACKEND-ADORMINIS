@@ -7,11 +7,7 @@ router.get('/', function (req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
-router.get('/all-building/:dormID', async (req, res) => {
-  const dormID = req.params.dormID;
-  const allBuilding = await buildingController.getBuildingByDormID(dormID);
-  res.json(allBuilding);
-});
+router.get('/all-building/:dormID', buildingController.getBuildingByDormID);
 
 router.get('/all-room/:buildingID', async (req, res) => {
   const buildingID = req.params.buildingID;
