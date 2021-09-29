@@ -9,10 +9,6 @@ router.get('/', function (req, res, next) {
 
 router.get('/all-building/:dormID', buildingController.getBuildingByDormID);
 
-router.get('/all-room/:buildingID', async (req, res) => {
-  const buildingID = req.params.buildingID;
-  const allRoom = await await roomController.getAllRoomByBuildingID(buildingID);
-  res.json(allRoom);
-});
+router.get('/all-room/:buildingID', roomController.getAllRoomByBuildingID);
 
 module.exports = router;
