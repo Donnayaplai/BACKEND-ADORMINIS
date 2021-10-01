@@ -1,7 +1,7 @@
 require('sequelize');
 const dormModel = require('../models/dorm');
 
-const CREATE_DORM = async (req, res) => {
+exports.createNewDorm = async (req, res) => {
   // Generate code
   const genCode = async () => {
     var code = '';
@@ -39,5 +39,3 @@ const CREATE_DORM = async (req, res) => {
       });
     });
 };
-
-module.exports = { CREATE_DORM };
