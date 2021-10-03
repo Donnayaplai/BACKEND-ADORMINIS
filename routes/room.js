@@ -19,6 +19,15 @@ router.get('/:personalCode', async (req, res) => {
   res.json(user);
 });
 
+//Get user info and CoR detail in edit page
+router.get('/editInfo/:rentID', async (req, res) => {
+  const rentID = req.params.rentID;
+  console.log("rentID: ", rentID)
+  const info = await rentController.getUserAndCoRInfo(rentID);
+  console.log("Test get user info and CoR detail in edit page")
+  res.json(info);
+});
+
 //Add resident to specific room
 router.post('/:buildingID/:roomID', async (req, res) => {
   req.body.personalCode;

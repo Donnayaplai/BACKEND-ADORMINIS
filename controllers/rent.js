@@ -53,6 +53,23 @@ const getOldCoRDetail = async (rentID, CoRID) => {
   return data;
 }
 
+const getUserAndCoRInfo = async (rentID) => {
+  const info = await db.query(
+    `SELECT u.FNAME , u.LNAME , u.TELNO , u.GENDER , u.IDCARDNO , u.EMAIL , r.CHECKINDATE , cor.STARTDATE , cor.ENDDATE 
+    FROM USER u JOIN RENT r 
+    ON u.USERID = r.USERID
+    JOIN CONTRACT_OF_RENT cor 
+    ON r.CONTRACTOFRENTID = cor.CONTRACTOFRENTID
+    WHERE r.RENTID  = ?`,
+    {
+      replacements: [rentID],
+      type: db.QueryTypes.SELECT,
+    }
+  );
+  console.log(info)
+  return info;
+}
+
 const getRoomPriceByRoomID = async (roomID) => {
   const roomPrice = await db.query(
     `SELECT PRICE 
@@ -444,4 +461,4 @@ const removeUser = async (req, res) => {
     });
 };
 
-module.exports = { getUserInfoByCode, addUserToRoom, addUserWithoutCode, addCoRDetail, editCoR, removeUser };
+module.exports = { getUserInfoByCode, getUserAndCoRInfo, addUserToRoom, addUserWithoutCode, addCoRDetail, editCoR, removeUser };
