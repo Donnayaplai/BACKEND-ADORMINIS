@@ -30,7 +30,7 @@ router.post('/:buildingID/:roomID', async (req, res) => {
 });
 
 //Add resident without code
-router.post('/:buildingID/:roomID', async (req, res) => {
+router.post('/addNoCode/:buildingID/:roomID', async (req, res) => {
   req.params.roomID;
   req.params.buildingID;
   const addResident = await rentController.addUserWithoutCode(req, res);
@@ -38,13 +38,21 @@ router.post('/:buildingID/:roomID', async (req, res) => {
 });
 
 //Insert addtional info in Profile page
-router.post('/addRes/:roomID/:newCoRID/:rentID', async (req, res) => {
+router.post('/addCoR/:roomID/:newCoRID/:newRendID', async (req, res) => {
   req.params.roomID;
   req.params.newCoRID;
-  req.params.rentID;
+  req.params.newRendID;
   console.log('Test Add CoR');
   const addCoRDetail = await rentController.addCoRDetail(req, res);
   res.json(addCoRDetail);
+});
+
+//Edit addtional info
+router.post('/edit/:rentID/:CoRID', async (req, res) => {
+  req.params.rentID;
+  req.params.CoRID;
+  const addResident = await rentController.editCoR(req, res);
+  res.json(addResident);
 });
 
 //Remove resident
