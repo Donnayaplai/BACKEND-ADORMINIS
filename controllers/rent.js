@@ -40,7 +40,6 @@ const getRoomPriceByRoomID = async (roomID) => {
   );
   return roomPrice[0].PRICE;
 };
-// console.log("roomPrice: ", roomPrice[0].PRICE);
 
 const getCoRID = async () => {
   const id = await db.query(
@@ -53,7 +52,30 @@ const getCoRID = async () => {
   );
   return id[0].CONTRACTOFRENTID;
 };
-// console.log("id: ", id[0].CONTRACTOFRENTID);
+
+const getUserID = async () => {
+  const id = await db.query(
+    `SELECT MAX(USERID) AS USERID
+        FROM USER
+        `,
+    {
+      type: db.QueryTypes.SELECT,
+    }
+  );
+  return id[0].CONTRACTOFRENTID;
+};
+
+const getRentID = async () => {
+  const id = await db.query(
+    `SELECT MAX(RENTID) AS RENTID
+        FROM RENT
+        `,
+    {
+      type: db.QueryTypes.SELECT,
+    }
+  );
+  return id[0].RENTID;
+};
 
 const getDormIDByBuildingID = async (buildingID) => {
   const dormID = await db.query(
@@ -77,6 +99,9 @@ const addUserToRoom = async (req, res) => {
   const dormID = await getDormIDByBuildingID(buildingID);
   const oldCoRID = await getCoRID();
   const newCoRID = Number(oldCoRID) + 1;
+  const oldRendID = await getRentID();
+  const newRendID = Number(oldRendID) + 1;
+  const checkOutDate = new Date().toISOString().slice(0, 10);
   const roomPrice = await getRoomPriceByRoomID(roomID);
   const multPrePaid = await settingModel.findOne({
     attributes: ['MULTPREPAID'],
@@ -84,9 +109,7 @@ const addUserToRoom = async (req, res) => {
       DORMID: dormID,
     },
   });
-  // console.log("newCoRID: ", newCoRID);
-  // console.log("roomPrice: ", roomPrice);
-  // console.log("multPrePaid: ", multPrePaid.dataValues.MULTPREPAID);
+
   const cor = {
     CONTRACTOFRENTID: newCoRID,
     GUARANTEEFEE: roomPrice,
@@ -94,10 +117,10 @@ const addUserToRoom = async (req, res) => {
   };
   const rent = {
     CONTRACTOFRENTID: newCoRID,
+    CHECKOUTDATE: checkOutDate,
     USERID: await getUserByCode(code),
     ROOMID: roomID,
   };
-  // console.log("rent: ", rent);
 
   CoRModel.create(cor)
     .then((data) => {
@@ -122,21 +145,116 @@ const addUserToRoom = async (req, res) => {
       };
     });
 
-  return { roomID, dormID, newCoRID };
+  return { roomID, dormID, newCoRID, newRendID };
+};
+
+const addUserWithoutCode = async (req, res) => {
+  const roomID = req.params.roomID;
+  const buildingID = req.params.buildingID;
+
+  const dormID = await getDormIDByBuildingID(buildingID);
+  const oldCoRID = await getCoRID();
+  const newCoRID = Number(oldCoRID) + 1;
+  const oldUserID = await getUserID();
+  const newUserID = Number(oldUserID) + 1;
+  const roomPrice = await getRoomPriceByRoomID(roomID);
+  const multPrePaid = await settingModel.findOne({
+    attributes: ['MULTPREPAID'],
+    where: {
+      DORMID: dormID,
+    },
+  });
+
+  const user = {
+    FNAME: req.body.fName ? req.body.fName : null,
+    LNAME: req.body.lName ? req.body.lName : null,
+    TELNO: req.body.telNo ? req.body.telNo : null,
+    GENDER: req.body.gender ? req.body.gender : null,
+    IDCARDNO: req.body.idCardNo ? req.body.idCardNo : null,
+    EMAIL: req.body.email ? req.body.email : null,
+    ROLEID: 0
+  };
+  const cor = {
+    CONTRACTOFRENTID: newCoRID,
+    STARTDATE: req.body.startDate ? req.body.startDate : null,
+    ENDDATE: req.body.endDate ? req.body.endDate : null,
+    GUARANTEEFEE: roomPrice,
+    PREPAID: roomPrice * multPrePaid.dataValues.MULTPREPAID,
+  };
+  const rent = {
+    CONTRACTOFRENTID: newCoRID,
+    CHECKINDATE: req.body.checkInDate ? req.body.checkInDate : null,
+    USERID: newUserID,
+    ROOMID: roomID,
+  };
+
+  userModel.create(user)
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      console.log(err);
+      return {
+        message: err.message,
+      };
+    });
+
+  CoRModel.create(cor)
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      console.log(err);
+      return {
+        message: err.message,
+      };
+    });
+
+  rentModel.create(rent)
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      console.log(err);
+      return {
+        message: err.message,
+      };
+    });
+
+  roomModel.update(
+    { STATUS: 0 },
+    {
+      where: {
+        ROOMID: roomID,
+      },
+    }
+  )
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      console.log(err);
+      return {
+        message: err.message,
+      };
+    });
+
+  return { roomID, dormID };
 };
 
 const addCoRDetail = async (req, res) => {
   const roomID = req.params.roomID;
-  // const dormID = req.params.dormID;
   const newCoRID = req.params.newCoRID;
-  const startDate = req.body.startDate;
-  const endDate = req.body.endDate;
-  // const checkInDate = req.body.checkInDate;
+  const newRendID = req.params.newRendID;
 
   const cor = {
-    STARTDATE: startDate,
-    ENDDATE: endDate,
+    STARTDATE: req.body.startDate ? req.body.startDate : null,
+    ENDDATE: req.body.endDate ? req.body.endDate : null
   };
+  const rent = {
+    CHECKINDATE: req.body.checkInDate ? req.body.checkInDate : null,
+    CHECKOUTDATE: null
+  }
 
   CoRModel.update(cor, {
     where: {
@@ -153,9 +271,67 @@ const addCoRDetail = async (req, res) => {
       };
     });
 
+  rentModel.update(rent, {
+    where: {
+      RENTID: newRendID,
+    },
+  })
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      console.log(err);
+      return {
+        message: err.message,
+      };
+    });
+
+  roomModel.update(
+    { STATUS: 0 },
+    {
+      where: {
+        ROOMID: roomID,
+      },
+    }
+  )
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      console.log(err);
+      return {
+        message: err.message,
+      };
+    });
+};
+
+const removeUser = async (req, res) => {
+  const rentID = req.params.rentID;
+  const roomID = req.params.roomID;
+  const checkOutDate = new Date().toISOString().slice(0, 10);
+
+  const rent = {
+    CHECKOUTDATE: checkOutDate
+  };
+
+  rentModel.update(rent, {
+    where: {
+      RENTID: rentID,
+    },
+  })
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      console.log(err);
+      return {
+        message: err.message,
+      };
+    });
+
   roomModel
     .update(
-      { STATUS: 0 },
+      { STATUS: 1 },
       {
         where: {
           ROOMID: roomID,
@@ -173,4 +349,4 @@ const addCoRDetail = async (req, res) => {
     });
 };
 
-module.exports = { getUserInfoByCode, addUserToRoom, addCoRDetail };
+module.exports = { getUserInfoByCode, addUserToRoom, addUserWithoutCode, addCoRDetail, removeUser };
