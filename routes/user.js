@@ -10,7 +10,10 @@ router.get('/info/:roomID', async (req, res) => {
   res.json(residentInfo);
 });
 
-router.post('/register', userController.registerUser);
+router.post('/residentRegister', userController.residentRegister);
 
-// router.post('/login', userController);
+router.post('/adminRegister', userController.adminRegister);
+
+router.post('/login', userController.userLogin);
+
 module.exports = router;
