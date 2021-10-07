@@ -26,6 +26,12 @@ USER.init(
     IDCARDNO: {
       type: DataTypes.STRING,
     },
+    DATEOFBIRTH: {
+      type: DataTypes.DATE,
+    },
+    ADDRESS: {
+      type: DataTypes.STRING,
+    },
     EMAIL: {
       type: DataTypes.STRING,
     },
