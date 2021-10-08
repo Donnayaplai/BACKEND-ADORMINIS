@@ -1,21 +1,43 @@
-const User = require('../models/user');
+const userModel = require('../models/user');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-const genCode = async () => {
-  var code = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const charactersLength = characters.length;
-  for (var i = 0; i < 6; i++) {
-    code += characters.charAt(Math.floor(Math.random() * charactersLength));
+const verifyUser = async (req, res) => {
+  const { idCardNo, dateOfBirth } = req.body;
+  const user = await userModel.findOne({
+    attributes: ['USERID'],
+    where: {
+      IDCARDNO: idCardNo
+    }
+  });
+
+  if (user) {
+
+    const userId = user.dataValues;
+    const dbDateOfBirth = await userModel.findOne({
+      attributes: ['DATEOFBIRTH'],
+      where: {
+        IDCARDNO: idCardNo
+      }
+    });
+
+    if (dateOfBirth === dbDateOfBirth.dataValues.DATEOFBIRTH) {
+      return res.status(200).send(userId)
+
+    } else {
+      return res.status(400).json({ errors: [{ msg: 'Date of birth is not match' }] });
+    }
+
+  } else {
+    return res.status(400).json({ errors: [{ msg: 'User not found' }] });
   }
-  return code;
 }
 
 const residentRegister = async (req, res) => {
-  var { fname, lname, telno, gender, IDCardNo, email, password } = req.body;
+  var { email, password } = req.body;
+  const { userId } = req.params;
   try {
-    let user = await User.findOne({
+    const user = await userModel.findOne({
       attributes: ['EMAIL'],
       where: {
         EMAIL: email
@@ -23,25 +45,25 @@ const residentRegister = async (req, res) => {
     });
 
     if (user) {
-      return res.status(400).json({ errors: [{ msg: 'User already exist' }] });
-    }
-    // Encrypt password
-    const salt = await bcrypt.genSalt(10);
-    password = await bcrypt.hash(password, salt);
+      return res.status(400).json({ errors: [{ msg: 'Email already exist' }] });
 
-    let newUser = await User.create({
-      FNAME: fname,
-      LNAME: lname,
-      TELNO: telno,
-      GENDER: gender,
-      IDCARDNO: IDCardNo,
-      EMAIL: email,
-      PASSWORD: password,
-      PERSONALCODE: await genCode(),
-      ROLEID: 0 // Resident
-    });
-    console.log("New user was created: ", newUser.EMAIL)
-    res.status(200).send('User registered')
+    } else {
+      // Encrypt password
+      const salt = await bcrypt.genSalt(10);
+      password = await bcrypt.hash(password, salt);
+
+      await userModel.update({
+        EMAIL: email,
+        PASSWORD: password
+      }, {
+        where: {
+          USERID: userId
+        }
+      });
+      console.log("New user was created: ", email)
+      res.status(200).send('User registered')
+    }
+
   } catch (err) {
     console.log(err.message);
     res.status(500).send('Server error');
@@ -51,7 +73,7 @@ const residentRegister = async (req, res) => {
 const adminRegister = async (req, res) => {
   var { fname, lname, telno, gender, IDCardNo, email, password } = req.body;
   try {
-    let user = await User.findOne({
+    const user = await userModel.findOne({
       attributes: ['EMAIL'],
       where: {
         EMAIL: email
@@ -60,23 +82,26 @@ const adminRegister = async (req, res) => {
 
     if (user) {
       return res.status(400).json({ errors: [{ msg: 'User already exist' }] });
-    }
-    // Encrypt password
-    const salt = await bcrypt.genSalt(10);
-    password = await bcrypt.hash(password, salt);
 
-    let newUser = await User.create({
-      FNAME: fname,
-      LNAME: lname,
-      TELNO: telno,
-      GENDER: gender,
-      IDCARDNO: IDCardNo,
-      EMAIL: email,
-      PASSWORD: password,
-      ROLEID: 1 // Admin
-    });
-    console.log("New user was created: ", newUser.EMAIL)
-    res.status(200).send('User registered')
+    } else {
+      // Encrypt password
+      const salt = await bcrypt.genSalt(10);
+      password = await bcrypt.hash(password, salt);
+
+      let newUser = await userModel.create({
+        FNAME: fname,
+        LNAME: lname,
+        TELNO: telno,
+        GENDER: gender,
+        IDCARDNO: IDCardNo,
+        EMAIL: email,
+        PASSWORD: password,
+        ROLEID: 1 // Admin
+      });
+      console.log("New user was created: ", newUser.EMAIL)
+      res.status(200).send('User registered')
+    }
+
   } catch (err) {
     console.log(err.message);
     res.status(500).send('Server error');
@@ -86,8 +111,7 @@ const adminRegister = async (req, res) => {
 const userLogin = async (req, res) => {
   var { email, password } = req.body;
   try {
-    // Check email
-    const user = await User.findOne({
+    const user = await userModel.findOne({
       where: {
         EMAIL: email
       }
@@ -96,30 +120,31 @@ const userLogin = async (req, res) => {
     if (!user) {
       res.status(400).json({ error: "Email not found" });
     }
-    // Check password
+
     const dbPassword = user.PASSWORD;
-    // console.log("dbPassword: ", dbPassword)
     bcrypt.compare(password, dbPassword).then(async (match) => {
+
       if (!match) {
         res.status(400).json({ error: "Email or password incorrect" });
+
       } else {
         // Return jsonwebtoken
-        const payload = await User.findOne({
+        const payload = await userModel.findOne({
           attributes: ['USERID', 'ROLEID'],
           where: {
             EMAIL: email
           }
         });
-        // console.log("Payload: ", payload.dataValues)
         let token = jwt.sign(payload.dataValues, "sectret");
         console.log(token)
         res.status(200).send(token);
       }
     });
+
   } catch (err) {
     console.log(err.message);
     res.status(500).send('Server error');
   }
 }
 
-module.exports = { residentRegister, adminRegister, userLogin };
+module.exports = { verifyUser, residentRegister, adminRegister, userLogin };

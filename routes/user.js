@@ -10,7 +10,9 @@ router.get('/info/:roomID', async (req, res) => {
   res.json(residentInfo);
 });
 
-router.post('/residentRegister', userController.residentRegister);
+router.post('/verifyUser', userController.verifyUser);
+
+router.post('/register/:userId', userController.residentRegister);
 
 router.post('/adminRegister', userController.adminRegister);
 
