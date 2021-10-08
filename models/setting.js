@@ -1,7 +1,7 @@
 const { DataTypes, Model } = require('sequelize');
 const sequelize = require('../config/dbConnection');
 
-class SETTING extends Model {}
+class SETTING extends Model { }
 
 SETTING.init(
   {
@@ -19,6 +19,9 @@ SETTING.init(
       type: DataTypes.DECIMAL,
     },
     MINWATERPRICE: {
+      type: DataTypes.DECIMAL,
+    },
+    GUARANTEEFEE: {
       type: DataTypes.DECIMAL,
     },
     MULTPREPAID: {
