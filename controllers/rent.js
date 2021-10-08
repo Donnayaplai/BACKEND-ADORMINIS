@@ -45,20 +45,15 @@ const getUserID = async () => {
   return id[0].USERID;
 };
 
-const getRoomPriceByRoomID = async (roomID) => {
-  const roomPrice = await db.query(
-    `SELECT PRICE 
-        FROM ROOM r JOIN ROOM_TYPE rt
-        ON r.ROOMTYPEID = rt.ROOMTYPEID
-        WHERE r.ROOMID = ?
-        `,
-    {
-      replacements: [roomID],
-      type: db.QueryTypes.SELECT
+const getGuaranteeFee = async (dormID) => {
+  const guaranteeFee = await settingModel.findOne({
+    attributes: ['GUARANTEEFEE'],
+    where: {
+      DORMID: dormID
     }
-  );
-  return roomPrice[0].PRICE;
-};
+  });
+  return guaranteeFee.dataValues.GUARANTEEFEE;
+}
 
 const getMultPrePaid = async (dormID) => {
   const multPrePaid = await settingModel.findOne({
@@ -104,7 +99,7 @@ const addUserToRoom = async (req, res) => {
   const dormID = await getDormIDByBuildingID(buildingID);
   const nextCoRID = Number(await getCoRID()) + 1;
   const nextUserID = Number(await getUserID()) + 1;
-  const roomPrice = await getRoomPriceByRoomID(roomID);
+  const guaranteeFee = await getGuaranteeFee(dormID);
   const prePaid = Number(await getMultPrePaid(dormID)) * roomPrice;
 
   const userInfo = {
@@ -122,7 +117,7 @@ const addUserToRoom = async (req, res) => {
     CONTRACTOFRENTID: nextCoRID,
     STARTDATE: startDate,
     ENDDATE: endDate,
-    GUARANTEEFEE: roomPrice,
+    GUARANTEEFEE: guaranteeFee,
     PREPAID: prePaid,
   };
 
@@ -162,7 +157,7 @@ const addUserToRoom = async (req, res) => {
 
     // Create new rent for new user
     rentModel.create({
-      CHECKINDATE: checkInDate,
+      CHECKINDATE: checkInDate ? checkInDate : null,
       CONTRACTOFRENTID: nextCoRID,
       USERID: nextUserID,
       ROOMID: roomID
@@ -202,7 +197,7 @@ const addUserToRoom = async (req, res) => {
 
     // Create new rent for old user
     rentModel.create({
-      CHECKINDATE: checkInDate,
+      CHECKINDATE: checkInDate ? checkInDate : null,
       CONTRACTOFRENTID: nextCoRID,
       USERID: thisUserID,
       ROOMID: roomID
