@@ -107,9 +107,10 @@ const getOldCoRAndRentDetail = async (rentID, CoRID) => {
   return data;
 }
 
+
 const addUserToRoom = async (req, res) => {
   const { roomID, buildingID } = req.params;
-  const { fName, lName, telNo, gender, idCardNo, dateOfBirth, address, startDate, endDate, checkInDate } = req.body;
+  const { fName, lName, telNo, gender, idCardNo, dateOfBirth, address, startDate, endDate, checkInDate } = req.body.formData;
 
   const dormID = await getDormIDByBuildingID(buildingID);
   const nextCoRID = Number(await getCoRID()) + 1;
