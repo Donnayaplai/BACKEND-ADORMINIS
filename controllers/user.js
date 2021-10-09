@@ -71,7 +71,7 @@ const residentRegister = async (req, res) => {
 }
 
 const adminRegister = async (req, res) => {
-  var { fname, lname, telno, gender, IDCardNo, email, password } = req.body;
+  var { fName, lName, telNo, gender, idCardNo, dateOfBirth, email, password } = req.body;
   try {
     const user = await userModel.findOne({
       attributes: ['EMAIL'],
@@ -89,11 +89,12 @@ const adminRegister = async (req, res) => {
       password = await bcrypt.hash(password, salt);
 
       let newUser = await userModel.create({
-        FNAME: fname,
-        LNAME: lname,
-        TELNO: telno,
+        FNAME: fName,
+        LNAME: lName,
+        TELNO: telNo,
         GENDER: gender,
-        IDCARDNO: IDCardNo,
+        IDCARDNO: idCardNo,
+        DATEOFBIRTH: dateOfBirth,
         EMAIL: email,
         PASSWORD: password,
         ROLEID: 1 // Admin
