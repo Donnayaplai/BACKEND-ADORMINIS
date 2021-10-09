@@ -307,6 +307,12 @@ const editCoRAndRentInfo = async (req, res) => {
 const removeUser = async (req, res) => {
   const { rentID, roomID } = req.params;
   const checkOutDate = new Date().toISOString().slice(0, 10);
+  const userInRoom = await rentModel.findAll({
+    where: {
+      ROOMID: roomID,
+      CHECKOUTDATE: null
+    }
+  });
 
   // Update rent
   rentModel.update({
@@ -326,14 +332,7 @@ const removeUser = async (req, res) => {
       };
     });
 
-  const userInRoom = await rentModel.findAll({
-    where: {
-      ROOMID: roomID,
-      CHECKOUTDATE: null
-    }
-  });
-
-  if (userInRoom.length == 0) {
+  if (userInRoom.length == 1) {
 
     // Update room status to available
     roomModel
@@ -354,7 +353,6 @@ const removeUser = async (req, res) => {
           message: err.message,
         };
       });
-
   }
 
   return res.status(200).send(console.log("User has been removed from room ID ", roomID));
