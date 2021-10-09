@@ -18,4 +18,6 @@ router.post('/adminRegister', userController.adminRegister);
 
 router.post('/login', userController.userLogin);
 
+router.get('/detail', userController.getUserDetail);
+
 module.exports = router;

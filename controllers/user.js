@@ -136,8 +136,14 @@ const userLogin = async (req, res) => {
           }
         });
         let token = jwt.sign(payload.dataValues, "sectret");
-        console.log(token)
-        res.status(200).send(token);
+
+        const data = {
+          TOKEN: token,
+          ROLEID: payload.dataValues.ROLEID
+        }
+
+        console.log(data)
+        res.status(200).send(data);
       }
     });
 
@@ -147,4 +153,22 @@ const userLogin = async (req, res) => {
   }
 }
 
-module.exports = { verifyUser, residentRegister, adminRegister, userLogin };
+const getUserDetail = async (req, res) => {
+  const { authorization } = req.headers
+
+  jwt.verify(authorization, "sectret", async (err, userDetail) => {
+    if (err) {
+      res.status(400).send(err.message)
+    } else {
+      const user = await userModel.findOne({
+        where: {
+          USERID: userDetail.USERID
+        }
+      });
+
+      res.status(200).send(user)
+    }
+  })
+};
+
+module.exports = { verifyUser, residentRegister, adminRegister, userLogin, getUserDetail };
