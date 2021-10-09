@@ -333,7 +333,7 @@ const removeUser = async (req, res) => {
     }
   });
 
-  if (!userInRoom[0]) {
+  if (userInRoom.length == 0) {
 
     // Update room status to available
     roomModel
