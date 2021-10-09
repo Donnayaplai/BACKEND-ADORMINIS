@@ -55,6 +55,21 @@ const getGuaranteeFee = async (dormID) => {
   return guaranteeFee.dataValues.GUARANTEEFEE;
 }
 
+const getRoomPriceByRoomID = async (roomID) => {
+  const roomPrice = await db.query(
+    `SELECT PRICE 
+        FROM ROOM r JOIN ROOM_TYPE rt
+        ON r.ROOMTYPEID = rt.ROOMTYPEID
+        WHERE r.ROOMID = ?
+        `,
+    {
+      replacements: [roomID],
+      type: db.QueryTypes.SELECT
+    }
+  );
+  return roomPrice[0].PRICE;
+};
+
 const getMultPrePaid = async (dormID) => {
   const multPrePaid = await settingModel.findOne({
     attributes: ['MULTPREPAID'],
@@ -100,6 +115,7 @@ const addUserToRoom = async (req, res) => {
   const nextCoRID = Number(await getCoRID()) + 1;
   const nextUserID = Number(await getUserID()) + 1;
   const guaranteeFee = await getGuaranteeFee(dormID);
+  const roomPrice = await getRoomPriceByRoomID(roomID);
   const prePaid = Number(await getMultPrePaid(dormID)) * roomPrice;
 
   const userInfo = {
