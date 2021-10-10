@@ -15,7 +15,7 @@ const getDormIDByBuildingID = async (buildingID) => {
         `,
     {
       replacements: [buildingID],
-      type: db.QueryTypes.SELECT
+      type: db.QueryTypes.SELECT,
     }
   );
   return dormID[0].DORMID;
@@ -27,7 +27,7 @@ const getCoRID = async () => {
         FROM CONTRACT_OF_RENT
         `,
     {
-      type: db.QueryTypes.SELECT
+      type: db.QueryTypes.SELECT,
     }
   );
   return id[0].CONTRACTOFRENTID;
@@ -39,7 +39,7 @@ const getUserID = async () => {
         FROM USER
         `,
     {
-      type: db.QueryTypes.SELECT
+      type: db.QueryTypes.SELECT,
     }
   );
   return id[0].USERID;
@@ -49,11 +49,11 @@ const getGuaranteeFee = async (dormID) => {
   const guaranteeFee = await settingModel.findOne({
     attributes: ['GUARANTEEFEE'],
     where: {
-      DORMID: dormID
-    }
+      DORMID: dormID,
+    },
   });
   return guaranteeFee.dataValues.GUARANTEEFEE;
-}
+};
 
 const getRoomPriceByRoomID = async (roomID) => {
   const roomPrice = await db.query(
@@ -64,7 +64,7 @@ const getRoomPriceByRoomID = async (roomID) => {
         `,
     {
       replacements: [roomID],
-      type: db.QueryTypes.SELECT
+      type: db.QueryTypes.SELECT,
     }
   );
   return roomPrice[0].PRICE;
@@ -74,43 +74,53 @@ const getMultPrePaid = async (dormID) => {
   const multPrePaid = await settingModel.findOne({
     attributes: ['MULTPREPAID'],
     where: {
-      DORMID: dormID
-    }
+      DORMID: dormID,
+    },
   });
   return multPrePaid.dataValues.MULTPREPAID;
-}
+};
 
 const getOldCoRAndRentDetail = async (rentID, CoRID) => {
   const oldCheckInDate = await rentModel.findOne({
     attributes: ['CHECKINDATE'],
     where: {
-      RENTID: rentID
-    }
+      RENTID: rentID,
+    },
   });
   const oldStartDate = await CoRModel.findOne({
     attributes: ['STARTDATE'],
     where: {
-      CONTRACTOFRENTID: CoRID
-    }
+      CONTRACTOFRENTID: CoRID,
+    },
   });
   const oldEndDate = await CoRModel.findOne({
     attributes: ['ENDDATE'],
     where: {
-      CONTRACTOFRENTID: CoRID
-    }
+      CONTRACTOFRENTID: CoRID,
+    },
   });
   const data = {
     CHECKINDATE: oldCheckInDate.dataValues.CHECKINDATE,
     STARTDATE: oldStartDate.dataValues.STARTDATE,
-    ENDDATE: oldEndDate.dataValues.ENDDATE
-  }
+    ENDDATE: oldEndDate.dataValues.ENDDATE,
+  };
   return data;
-}
-
+};
 
 const addUserToRoom = async (req, res) => {
   const { roomID, buildingID } = req.params;
-  const { fName, lName, telNo, gender, idCardNo, dateOfBirth, address, startDate, endDate, checkInDate } = req.body.formData;
+  const {
+    fName,
+    lName,
+    telNo,
+    gender,
+    idCardNo,
+    dateOfBirth,
+    address,
+    startDate,
+    endDate,
+    checkInDate,
+  } = req.body.formData;
 
   const dormID = await getDormIDByBuildingID(buildingID);
   const nextCoRID = Number(await getCoRID()) + 1;
@@ -127,7 +137,7 @@ const addUserToRoom = async (req, res) => {
     IDCARDNO: idCardNo,
     DATEOFBIRTH: dateOfBirth,
     ADDRESS: address ? address : null,
-    ROLEID: 0
+    ROLEID: 0,
   };
 
   const corInfo = {
@@ -153,14 +163,16 @@ const addUserToRoom = async (req, res) => {
   const isIdCardNoExist = await userModel.findOne({
     attributes: ['USERID'],
     where: {
-      IDCARDNO: idCardNo
-    }
+      IDCARDNO: idCardNo,
+    },
   });
 
-  if (!isIdCardNoExist) { // New user
+  if (!isIdCardNoExist) {
+    // New user
 
     // Create new user
-    userModel.create(userInfo)
+    userModel
+      .create(userInfo)
       .then((data) => {
         return data;
       })
@@ -170,15 +182,16 @@ const addUserToRoom = async (req, res) => {
           message: err.message,
         };
       });
-    console.log("New user created");
+    console.log('New user created');
 
     // Create new rent for new user
-    rentModel.create({
-      CHECKINDATE: checkInDate ? checkInDate : null,
-      CONTRACTOFRENTID: nextCoRID,
-      USERID: nextUserID,
-      ROOMID: roomID
-    })
+    rentModel
+      .create({
+        CHECKINDATE: checkInDate ? checkInDate : null,
+        CONTRACTOFRENTID: nextCoRID,
+        USERID: nextUserID,
+        ROOMID: roomID,
+      })
       .then((data) => {
         return data;
       })
@@ -188,19 +201,18 @@ const addUserToRoom = async (req, res) => {
           message: err.message,
         };
       });
-
-  } else { // Old user
+  } else {
+    // Old user
 
     const thisUserID = isIdCardNoExist.dataValues.USERID;
 
     // Update user
-    userModel.update(userInfo,
-      {
+    userModel
+      .update(userInfo, {
         where: {
-          IDCARDNO: idCardNo
-        }
-      }
-    )
+          IDCARDNO: idCardNo,
+        },
+      })
       .then((data) => {
         return data;
       })
@@ -210,15 +222,16 @@ const addUserToRoom = async (req, res) => {
           message: err.message,
         };
       });
-    console.log("User updated");
+    console.log('User updated');
 
     // Create new rent for old user
-    rentModel.create({
-      CHECKINDATE: checkInDate ? checkInDate : null,
-      CONTRACTOFRENTID: nextCoRID,
-      USERID: thisUserID,
-      ROOMID: roomID
-    })
+    rentModel
+      .create({
+        CHECKINDATE: checkInDate ? checkInDate : null,
+        CONTRACTOFRENTID: nextCoRID,
+        USERID: thisUserID,
+        ROOMID: roomID,
+      })
       .then((data) => {
         return data;
       })
@@ -228,18 +241,18 @@ const addUserToRoom = async (req, res) => {
           message: err.message,
         };
       });
-
   }
 
   // Update room status to not available
-  roomModel.update(
-    { STATUS: 0 },
-    {
-      where: {
-        ROOMID: roomID
+  roomModel
+    .update(
+      { STATUS: 0 },
+      {
+        where: {
+          ROOMID: roomID,
+        },
       }
-    }
-  )
+    )
     .then((data) => {
       return data;
     })
@@ -250,31 +263,34 @@ const addUserToRoom = async (req, res) => {
       };
     });
 
-  return res.status(200).send(console.log("Resident has been added to room ID ", roomID));
+  return res
+    .status(200)
+    .send(console.log('Resident has been added to room ID ', roomID));
 };
 
 const editCoRAndRentInfo = async (req, res) => {
   const { rentID, CoRID } = req.params;
-  const { startDate, endDate, checkInDate } = req.body;
-  const oldDetail = await getOldCoRAndRentDetail(rentID, CoRID)
-  const oldCheckInDate = oldDetail.CHECKINDATE
-  const oldStartDate = oldDetail.STARTDATE
-  const oldEndDate = oldDetail.ENDDATE
+  const { startDate, endDate, checkInDate } = req.body.editUserData;
+  const oldDetail = await getOldCoRAndRentDetail(rentID, CoRID);
+  const oldCheckInDate = oldDetail.CHECKINDATE;
+  const oldStartDate = oldDetail.STARTDATE;
+  const oldEndDate = oldDetail.ENDDATE;
 
   const rentInfo = {
-    CHECKINDATE: checkInDate ? checkInDate : oldCheckInDate
-  }
+    CHECKINDATE: checkInDate ? checkInDate : oldCheckInDate,
+  };
   const corInfo = {
     STARTDATE: startDate ? startDate : oldStartDate,
-    ENDDATE: endDate ? endDate : oldEndDate
-  }
+    ENDDATE: endDate ? endDate : oldEndDate,
+  };
 
   // Update rent
-  rentModel.update(rentInfo, {
-    where: {
-      RENTID: rentID
-    }
-  })
+  rentModel
+    .update(rentInfo, {
+      where: {
+        RENTID: rentID,
+      },
+    })
     .then((data) => {
       return data;
     })
@@ -288,8 +304,8 @@ const editCoRAndRentInfo = async (req, res) => {
   // Update cor
   CoRModel.update(corInfo, {
     where: {
-      CONTRACTOFRENTID: CoRID
-    }
+      CONTRACTOFRENTID: CoRID,
+    },
   })
     .then((data) => {
       return data;
@@ -301,8 +317,10 @@ const editCoRAndRentInfo = async (req, res) => {
       };
     });
 
-  return res.status(200).send(console.log("Information has been updated to rent ID ", rentID));
-}
+  return res
+    .status(200)
+    .send(console.log('Information has been updated to rent ID ', rentID));
+};
 
 const removeUser = async (req, res) => {
   const { rentID, roomID } = req.params;
@@ -310,18 +328,22 @@ const removeUser = async (req, res) => {
   const userInRoom = await rentModel.findAll({
     where: {
       ROOMID: roomID,
-      CHECKOUTDATE: null
-    }
+      CHECKOUTDATE: null,
+    },
   });
 
   // Update rent
-  rentModel.update({
-    CHECKOUTDATE: checkOutDate
-  }, {
-    where: {
-      RENTID: rentID
-    }
-  })
+  rentModel
+    .update(
+      {
+        CHECKOUTDATE: checkOutDate,
+      },
+      {
+        where: {
+          RENTID: rentID,
+        },
+      }
+    )
     .then((data) => {
       return data;
     })
@@ -333,15 +355,14 @@ const removeUser = async (req, res) => {
     });
 
   if (userInRoom.length == 1) {
-
     // Update room status to available
     roomModel
       .update(
         { STATUS: 1 },
         {
           where: {
-            ROOMID: roomID
-          }
+            ROOMID: roomID,
+          },
         }
       )
       .then((data) => {
@@ -355,7 +376,9 @@ const removeUser = async (req, res) => {
       });
   }
 
-  return res.status(200).send(console.log("User has been removed from room ID ", roomID));
+  return res
+    .status(200)
+    .send(console.log('User has been removed from room ID ', roomID));
 };
 
 module.exports = { addUserToRoom, editCoRAndRentInfo, removeUser };
