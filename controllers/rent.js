@@ -293,9 +293,10 @@ const addUserToRoom = async (req, res) => {
         };
       });
 
+    const message = String('Resident has been added to room ID ' + roomID);
     return res
       .status(200)
-      .send(console.log('Resident has been added to room ID ', roomID));
+      .send(message);
 
   } else {
     return res
@@ -353,9 +354,10 @@ const editCoRAndRentInfo = async (req, res) => {
       };
     });
 
+  const message = String('Information has been updated to rent ID ' + rentID);
   return res
     .status(200)
-    .send(console.log('Information has been updated to rent ID ', rentID));
+    .send(message);
 };
 
 const removeUser = async (req, res) => {
@@ -412,9 +414,10 @@ const removeUser = async (req, res) => {
       });
   }
 
+  const message = String('User has been removed from room ID ' + roomID);
   return res
     .status(200)
-    .send(console.log('User has been removed from room ID ', roomID));
+    .send(message);
 };
 
 module.exports = { addUserToRoom, editCoRAndRentInfo, removeUser };
