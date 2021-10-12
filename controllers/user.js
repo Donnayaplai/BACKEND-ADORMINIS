@@ -22,7 +22,7 @@ const verifyUser = async (req, res) => {
     });
 
     if (dateOfBirth === dbDateOfBirth.dataValues.DATEOFBIRTH) {
-      res.status(200).send(userId)
+      return res.status(200).send(userId)
 
     } else {
       return res.status(400).json({ errors: [{ msg: 'Date of birth is not match' }] });
