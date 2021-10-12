@@ -29,7 +29,7 @@ const verifyUser = async (req, res) => {
     }
 
   } else {
-    return res.status(400).send(false);
+    return res.status(400).send({ USERID: false });
   }
 }
 
