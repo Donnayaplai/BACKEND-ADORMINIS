@@ -50,7 +50,7 @@ const getGuaranteeFee = async (dormID) => {
     attributes: ['GUARANTEEFEE'],
     where: {
       DORMID: dormID,
-    }
+    },
   });
   return guaranteeFee.dataValues.GUARANTEEFEE;
 };
@@ -75,7 +75,7 @@ const getMultPrePaid = async (dormID) => {
     attributes: ['MULTPREPAID'],
     where: {
       DORMID: dormID,
-    }
+    },
   });
   return multPrePaid.dataValues.MULTPREPAID;
 };
@@ -85,7 +85,7 @@ const isUserInRoom = async (idCardNo) => {
     attributes: ['USERID'],
     where: {
       IDCARDNO: idCardNo,
-    }
+    },
   });
 
   if (userID == null) {
@@ -95,7 +95,7 @@ const isUserInRoom = async (idCardNo) => {
       where: {
         USERID: userID.dataValues.USERID,
         CHECKOUTDATE: null,
-      }
+      },
     });
 
     if (!isInRoom[0]) {
@@ -104,26 +104,26 @@ const isUserInRoom = async (idCardNo) => {
       return true; // User already in room
     }
   }
-}
+};
 
 const getOldCoRAndRentDetail = async (rentID, CoRID) => {
   const oldCheckInDate = await rentModel.findOne({
     attributes: ['CHECKINDATE'],
     where: {
       RENTID: rentID,
-    }
+    },
   });
   const oldStartDate = await CoRModel.findOne({
     attributes: ['STARTDATE'],
     where: {
       CONTRACTOFRENTID: CoRID,
-    }
+    },
   });
   const oldEndDate = await CoRModel.findOne({
     attributes: ['ENDDATE'],
     where: {
       CONTRACTOFRENTID: CoRID,
-    }
+    },
   });
   const data = {
     CHECKINDATE: oldCheckInDate.dataValues.CHECKINDATE,
@@ -146,12 +146,11 @@ const addUserToRoom = async (req, res) => {
     startDate,
     endDate,
     checkInDate,
-  } = req.body.formData;
+  } = req.body;
 
-  const userStatus = await isUserInRoom(idCardNo)
+  const userStatus = await isUserInRoom(idCardNo);
 
   if (userStatus == false) {
-
     const dormID = await getDormIDByBuildingID(buildingID);
     const nextCoRID = Number(await getCoRID()) + 1;
     const nextUserID = Number(await getUserID()) + 1;
@@ -194,7 +193,7 @@ const addUserToRoom = async (req, res) => {
       attributes: ['USERID'],
       where: {
         IDCARDNO: idCardNo,
-      }
+      },
     });
 
     if (!isIdCardNoExist) {
@@ -241,7 +240,7 @@ const addUserToRoom = async (req, res) => {
         .update(userInfo, {
           where: {
             IDCARDNO: idCardNo,
-          }
+          },
         })
         .then((data) => {
           return data;
@@ -280,7 +279,7 @@ const addUserToRoom = async (req, res) => {
         {
           where: {
             ROOMID: roomID,
-          }
+          },
         }
       )
       .then((data) => {
@@ -294,14 +293,9 @@ const addUserToRoom = async (req, res) => {
       });
 
     const message = String('Resident has been added to room ID ' + roomID);
-    return res
-      .status(200)
-      .send(message);
-
+    return res.status(200).send(message);
   } else {
-    return res
-      .status(400)
-      .send('User already in room');
+    return res.status(400).send('User already in room');
   }
 };
 
@@ -326,7 +320,7 @@ const editCoRAndRentInfo = async (req, res) => {
     .update(rentInfo, {
       where: {
         RENTID: rentID,
-      }
+      },
     })
     .then((data) => {
       return data;
@@ -342,7 +336,7 @@ const editCoRAndRentInfo = async (req, res) => {
   CoRModel.update(corInfo, {
     where: {
       CONTRACTOFRENTID: CoRID,
-    }
+    },
   })
     .then((data) => {
       return data;
@@ -355,9 +349,7 @@ const editCoRAndRentInfo = async (req, res) => {
     });
 
   const message = String('Information has been updated to rent ID ' + rentID);
-  return res
-    .status(200)
-    .send(message);
+  return res.status(200).send(message);
 };
 
 const removeUser = async (req, res) => {
@@ -367,7 +359,7 @@ const removeUser = async (req, res) => {
     where: {
       ROOMID: roomID,
       CHECKOUTDATE: null,
-    }
+    },
   });
 
   // Update rent
@@ -379,7 +371,7 @@ const removeUser = async (req, res) => {
       {
         where: {
           RENTID: rentID,
-        }
+        },
       }
     )
     .then((data) => {
@@ -400,7 +392,7 @@ const removeUser = async (req, res) => {
         {
           where: {
             ROOMID: roomID,
-          }
+          },
         }
       )
       .then((data) => {
@@ -415,9 +407,7 @@ const removeUser = async (req, res) => {
   }
 
   const message = String('User has been removed from room ID ' + roomID);
-  return res
-    .status(200)
-    .send(message);
+  return res.status(200).send(message);
 };
 
 module.exports = { addUserToRoom, editCoRAndRentInfo, removeUser };
