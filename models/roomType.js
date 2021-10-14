@@ -1,7 +1,7 @@
 const { DataTypes, Model } = require('sequelize');
 const sequelize = require('../config/dbConnection');
 
-class ROOM_TYPE extends Model {}
+class ROOM_TYPE extends Model { }
 
 ROOM_TYPE.init(
   {
@@ -14,6 +14,9 @@ ROOM_TYPE.init(
     },
     PRICE: {
       type: DataTypes.DECIMAL,
+    },
+    DORMID: {
+      type: DataTypes.INTEGER,
     },
   },
   {
