@@ -2,6 +2,9 @@ require("Sequelize");
 const dormModel = require('../models/dorm');
 const settingModel = require('../models/setting');
 const buildingModel = require('../models/building');
+const roomTypeModel = require('../models/roomType');
+const roomModel = require('../models/room');
+const db = require('../config/dbConnection');
 
 const getOldCostSettingDetail = async (settingID) => {
     const oldDetail = await settingModel.findOne({
@@ -22,6 +25,29 @@ const getOldCostSettingDetail = async (settingID) => {
     });
     return oldDetail.dataValues;
 };
+
+const getBuildingID = async (buildingName, dormID) => {
+    const buildingID = await buildingModel.findOne({
+        attributes: ['BUILDINGID'],
+        where: {
+            BUILDINGNAME: buildingName,
+            DORMID: dormID
+        }
+    });
+    return buildingID.dataValues.BUILDINGID;
+};
+
+const getRoomTypeID = async (roomTypeName, dormID) => {
+    const roomTypeID = await roomTypeModel.findOne({
+        attributes: ['ROOMTYPEID'],
+        where: {
+            ROOMNAME: roomTypeName,
+            DORMID: dormID
+        }
+    });
+    return roomTypeID.dataValues.ROOMTYPEID;
+};
+
 
 const getCostSettingByDormID = async (req, res) => {
     const { dormID } = req.params;
@@ -106,26 +132,17 @@ const uocCostSetting = async (req, res) => {
                 DORMID: dormID
             }
         });
-
         return res.status(200).send({ setting, created: false });
     }
 };
 
-const getBuildingsByDormID = async (req, res) => {
+const getBuildingsByDormID = (req, res) => {
     const { dormID } = req.params;
 
-    const buildings = await buildingModel.findAll({
-        where: {
-            DORMID: dormID,
-        },
-    });
-    let arrayBuilding = []
-    for (let i = 0; i < buildings.length; i++) {
-        arrayBuilding.push(buildings[i].dataValues)
-    }
-    return res.status(200).send(arrayBuilding);
+    buildingModel
+        .findAll({ where: { DORMID: dormID } })
+        .then((data) => { res.status(200).send(data); })
 };
-
 
 const uocBuildings = async (req, res) => {
     const { dormID } = req.params;
@@ -146,20 +163,169 @@ const uocBuildings = async (req, res) => {
             }
         });
 
-        if (!isBuilding) {
+        if (i == arrayBuilding.length - 1) {
 
-            const data = await buildingModel.create(building)
-            return res.status(200).send({ data, created: true });
+            if (!isBuilding) {
 
+                await buildingModel.create(building)
+                return res.status(200).send("Success");
+
+            } else {
+                await buildingModel.update(building, {
+                    where: {
+                        BUILDINGID: building.BUILDINGID
+                    }
+                });
+                return res.status(200).send("Success");
+            }
 
         } else {
-            const data = await buildingModel.update(building, {
-                where: {
-                    BUILDINGID: building.BUILDINGID
-                }
-            });
-            return res.status(200).send({ data, created: false });
 
+            if (!isBuilding) {
+                await buildingModel.create(building)
+
+            } else {
+                await buildingModel.update(building, {
+                    where: {
+                        BUILDINGID: building.BUILDINGID
+                    }
+                });
+            }
+        }
+    }
+};
+
+const getRoomTypesByDormID = (req, res) => {
+    const { dormID } = req.params;
+
+    roomTypeModel
+        .findAll({ where: { DORMID: dormID } })
+        .then((data) => { res.status(200).send(data); })
+};
+
+const uocRoomTypes = async (req, res) => {
+    const { dormID } = req.params;
+    const { arrayRoomTypes } = req.body;
+
+    for (let i = 0; i < arrayRoomTypes.length; i++) {
+        const roomType = {
+            ROOMTYPEID: arrayRoomTypes[i].ROOMTYPEID ? arrayRoomTypes[i].ROOMTYPEID : null,
+            ROOMNAME: arrayRoomTypes[i].ROOMNAME,
+            PRICE: arrayRoomTypes[i].PRICE,
+            DORMID: dormID
+        }
+
+        const isRoomType = await roomTypeModel.findOne({
+            where: {
+                ROOMTYPEID: roomType.ROOMTYPEID,
+                DORMID: dormID
+            }
+        });
+
+        if (i == arrayRoomTypes.length - 1) {
+
+            if (!isRoomType) {
+                await roomTypeModel.create(roomType)
+                return res.status(200).send("Success");
+
+            } else {
+                await roomTypeModel.update(roomType, {
+                    where: {
+                        ROOMTYPEID: roomType.ROOMTYPEID
+                    }
+                });
+                return res.status(200).send("Success");
+            }
+
+        } else {
+
+            if (!isRoomType) {
+
+                await roomTypeModel.create(roomType)
+
+            } else {
+                await roomTypeModel.update(roomType, {
+                    where: {
+                        ROOMTYPEID: roomType.ROOMTYPEID
+                    }
+                });
+            }
+        }
+    }
+};
+
+const getRoomSetingByDormID = async (req, res) => {
+    const { dormID } = req.params;
+
+    const roomList = await db.query(
+        `SELECT r.ROOMID AS ROOMID, r.ROOMNO AS ROOMNO, r.FLOOR AS FLOOR, r.STATUS AS STATUS, r.BUILDINGID AS BUILDINGID, 
+        b.BUILDINGNAME AS BUILDINGNAME, r.ROOMTYPEID AS ROOMTYPEID, rt.ROOMNAME AS ROOMNAME
+        FROM ROOM r JOIN BUILDING b 
+        ON r.BUILDINGID = b.BUILDINGID 
+        JOIN DORMITORY d 
+        ON b.DORMID = d.DORMID 
+        JOIN ROOM_TYPE rt 
+        ON r.ROOMTYPEID = rt.ROOMTYPEID 
+        WHERE b.DORMID = ?`,
+        {
+            replacements: [dormID],
+            type: db.QueryTypes.SELECT,
+        }
+    );
+
+    return res.status(200).send(roomList);
+};
+
+const uocRoomSeting = async (req, res) => {
+    const { dormID } = req.params;
+    const {
+        buildingName,
+        floor,
+        arrayRoom
+    } = req.body;
+
+    for (let i = 0; i < arrayRoom.length; i++) {
+        const room = {
+            ROOMID: arrayRoom[i].ROOMID ? arrayRoom[i].ROOMID : null,
+            ROOMNO: arrayRoom[i].ROOMNO,
+            FLOOR: floor,
+            BUILDINGID: await getBuildingID(buildingName, dormID),
+            ROOMTYPEID: await getRoomTypeID(arrayRoom[i].ROOMNAME, dormID)
+        }
+
+        const isRoom = await roomModel.findOne({
+            where: {
+                ROOMID: room.ROOMID
+            }
+        });
+
+        if (i == arrayRoom.length - 1) {
+
+            if (!isRoom) {
+                await roomModel.create(room)
+                return res.status(200).send("Success");
+
+            } else {
+                await roomModel.update(room, {
+                    where: {
+                        ROOMID: room.ROOMID
+                    }
+                });
+                return res.status(200).send("Success");
+            }
+
+        } else {
+
+            if (!isRoom) {
+                await roomModel.create(room)
+
+            } else {
+                await roomModel.update(room, {
+                    where: {
+                        ROOMID: room.ROOMID
+                    }
+                });
+            }
         }
     }
 };
@@ -207,4 +373,4 @@ const updateDormInfo = async (req, res) => {
         });
 };
 
-module.exports = { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildings, updateDormInfo };
+module.exports = { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildings, getRoomTypesByDormID, uocRoomTypes, getRoomSetingByDormID, uocRoomSeting, updateDormInfo };
