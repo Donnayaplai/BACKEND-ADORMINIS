@@ -30,8 +30,8 @@ const userRouter = require('./routes/user');
 app.use('/api/user', userRouter);
 
 //Dorm
-// const dormRouter = require('./routes/dorm');
-// app.use('/dorm', dormRouter);
+const dormSettingRouter = require('./routes/dormSetting');
+app.use('/setting', dormSettingRouter);
 
 app.get('/', (req, res) => {
   res.json({
