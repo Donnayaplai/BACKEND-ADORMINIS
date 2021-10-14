@@ -1,41 +1,58 @@
 require('sequelize');
 const dormModel = require('../models/dorm');
 
-exports.createNewDorm = async (req, res) => {
-  // Generate code
-  const genCode = async () => {
-    var code = '';
-    const characters =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-    for (var i = 0; i < 6; i++) {
-      code += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return code;
+const db = require('../config/dbConnection');
+
+const createNewDorm = async (req, res) => {
+  const {
+    dormNameTH,
+    dormNameENG,
+    address,
+    province,
+    street,
+    postCode,
+    telNo,
+    subdistrict,
+    district
+  } = req.body;
+
+  const dormInfo = {
+    DORMNAMETH: dormNameTH ? dormNameTH : null,
+    DORMNAMEENG: dormNameENG ? dormNameENG : null,
+    ADDRESS: address ? address : null,
+    PROVINCE: province ? province : null,
+    STREET: street ? street : null,
+    POSTCODE: postCode ? postCode : null,
+    TELNO: telNo ? telNo : null,
+    SUBDISTRICT: subdistrict ? subdistrict : null,
+    DISTRICT: district ? district : null,
   };
 
-  const dorm = {
-    DORMNAMETH: req.body.dormNameTH ? req.body.dormNameTH : null,
-    DORMNAMEENG: req.body.dormNameENG ? req.body.dormNameENG : null,
-    NUMOFBUILDING: req.body.numOfBuylding ? req.body.numOfBuylding : null,
-    ADDRESS: req.body.address ? req.body.address : null,
-    PROVINCE: req.body.province ? req.body.province : null,
-    STREET: req.body.street ? req.body.street : null,
-    POSTCODE: req.body.postCode ? req.body.postCode : null,
-    TELNO: req.body.telNo ? req.body.telNo : null,
-    SUBDISTRICT: req.body.subdistrict ? req.body.subdistrict : null,
-    DISTRICT: req.body.district ? req.body.district : null,
-    DORMCODE: await genCode(),
-  };
+  const dormID = async () => {
+    const id = await db.query(
+      `SELECT MAX(DORMID) AS DORMID
+          FROM DORMITORY
+          `,
+      {
+        type: db.QueryTypes.SELECT,
+      }
+    );
+    return id[0].DORMID;
+  }
+  const nextDormID = String(Number(await dormID()) + 1);
 
   dormModel
-    .create(dorm)
+    .create(dormInfo)
     .then((data) => {
-      res.send(data);
+      res.status(200).send(data);
     })
     .catch((err) => {
       res.status(500).send({
         message: err.message,
       });
     });
+
+  return res.status(200).send({ DORMID: nextDormID });
 };
+
+module.exports = { createNewDorm };
