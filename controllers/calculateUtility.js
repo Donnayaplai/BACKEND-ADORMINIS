@@ -1,12 +1,13 @@
-const eMeter = require('../models/electricityMeter');
-const wMeter = require('../models/waterMeter');
-const unitUsed = require('../models/unitUsed');
-const setting = require('../models/setting');
-
+const electricMeterModel = require('../models/electricityMeter');
+const waterMeterModel = require('../models/waterMeter');
+const invoiceDetail = require('../models/invoiceDetail');
+const unitUsedModel = require('../models/unitUsed');
+const settingModel = require('../models/setting');
+const roomModel = require('../models/room');
 const db = require('../config/dbConnection');
 
-const OLD_EMETER = async (roomID) => {
-  const eMeterNo = await db.query(
+const getOldElectricMeterNo = async (roomID) => {
+  const electricMeterNo = await db.query(
     `SELECT ELECTRICITYNO 
         FROM ELECTRICITYMETER 
         WHERE ROOMID = ? 
@@ -16,34 +17,11 @@ const OLD_EMETER = async (roomID) => {
       type: db.QueryTypes.SELECT,
     }
   );
-  // console.log(eMeterNo[0].ELECTRICITYNO, "<<<meterNo")
-  return eMeterNo[0].ELECTRICITYNO;
+  return electricMeterNo[0].ELECTRICITYNO;
 };
 
-const GET_EUNIT = async (req, res) => {
-  var eMeterNo = Number(req.body.eMeterNo);
-  var oldEMeterNo = await OLD_EMETER(req.params.roomID);
-
-  if (eMeterNo < oldEMeterNo) {
-    eMeterNo += Number(9999.0);
-    const ELECTRICIRYUNIT = eMeterNo - oldEMeterNo;
-
-    // console.log(eMeterNo, "<<<if")
-    // console.log(ELECTRICIRYUNIT)
-    return ELECTRICIRYUNIT;
-  } else {
-    const ELECTRICIRYUNIT = eMeterNo - oldEMeterNo;
-    // console.log(ELECTRICIRYUNIT)
-    return ELECTRICIRYUNIT;
-  }
-  // console.log(req.body.eUnit)
-  // console.log(eUnit)
-  // console.log(oldEUnit)
-  // console.log(result)
-};
-
-const OLD_WMETER = async (roomID) => {
-  const wMeterNo = await db.query(
+const getOldWaterMeterNo = async (roomID) => {
+  const waterMeterNo = await db.query(
     `SELECT WATERNO 
         FROM WATERMETER 
         WHERE ROOMID = ? 
@@ -53,170 +31,203 @@ const OLD_WMETER = async (roomID) => {
       type: db.QueryTypes.SELECT,
     }
   );
-  // console.log(wMeterNo[0].WATERNO, "<<<meterNo")
-  return wMeterNo[0].WATERNO;
+  return waterMeterNo[0].WATERNO;
 };
 
-const GET_WUNIT = async (req, res) => {
-  var wMeterNo = Number(req.body.wMeterNo);
-  var oldWMeterNo = await OLD_WMETER(req.params.roomID);
-
-  if (wMeterNo < oldWMeterNo) {
-    wMeterNo += Number(9999.0);
-    const WATERUNIT = wMeterNo - oldWMeterNo;
-
-    // console.log(wMeterNo, "<<<if")
-    // console.log(WATERUNIT)
-    return WATERUNIT;
-  } else {
-    const WATERUNIT = wMeterNo - oldWMeterNo;
-
-    // console.log(WATERUNIT)
-    return WATERUNIT;
-  }
-};
-
-const GET_EPRICE = async (req, res) => {
-  const dormID = req.params.dormID;
-
-  const ELECTRICITYPRICE = await setting.findOne({
+const getElectricPricePerUnit = async (dormID) => {
+  const settingPrice = await settingModel.findOne({
     attributes: ['ELECTRICITYPRICE'],
     where: {
       DORMID: dormID,
     },
   });
-  // console.log("ELECTRICITYPRICE: ", ELECTRICITYPRICE.dataValues.ELECTRICITYPRICE)
-
-  var price = Number(0);
-  var pricePerUnit = ELECTRICITYPRICE.dataValues.ELECTRICITYPRICE;
-  var unitUsed = await GET_EUNIT(req, res);
-
-  price = unitUsed * pricePerUnit;
-  console.log('price: ', price);
-  return price;
+  return settingPrice.dataValues.ELECTRICITYPRICE;
 };
 
-const GET_WPRICE = async (req, res) => {
-  // pseudo
-  // get min_unit from dormsetting
-  // if GET_WUNIT[0].WATERUNIT > min_unit
-  // then price = ((GET_WUNIT[0].WATERUNIT - min_unit) * water_unit_price) + min_price ***???
-  // else price = min_price
-  const dormID = req.params.dormID;
-
-  const MINWATERUNIT = await setting.findOne({
-    attributes: ['MINWATERUNIT'],
-    where: {
-      DORMID: dormID,
-    },
-  });
-  // console.log("MINWATERUNIT: ", MINWATERUNIT.dataValues.MINWATERUNIT)
-
-  const WATERPRICE = await setting.findOne({
+const getWaterPricePerUnit = async (dormID) => {
+  const settingPrice = await settingModel.findOne({
     attributes: ['WATERPRICE'],
     where: {
       DORMID: dormID,
     },
   });
-  // console.log("WATERPRICE: ", WATERPRICE.dataValues.WATERPRICE)
+  return settingPrice.dataValues.WATERPRICE;
+};
 
-  const MINWATERPRICE = await setting.findOne({
+const getMinWaterUnit = async (dormID) => {
+  const minWaterUnit = await settingModel.findOne({
+    attributes: ['MINWATERUNIT'],
+    where: {
+      DORMID: dormID,
+    },
+  });
+  return minWaterUnit.dataValues.MINWATERUNIT;
+};
+
+const getMinWaterPrice = async (dormID) => {
+  const minWaterPrice = await settingModel.findOne({
     attributes: ['MINWATERPRICE'],
     where: {
       DORMID: dormID,
     },
   });
-  // console.log("MINWATERPRICE: ", MINWATERPRICE.dataValues.MINWATERPRICE)
-
-  var price = Number(0);
-  var minUnit = MINWATERUNIT.dataValues.MINWATERUNIT;
-  var pricePerUnit = WATERPRICE.dataValues.WATERPRICE;
-  var minPrice = MINWATERPRICE.dataValues.MINWATERPRICE;
-  var unitUsed = await GET_WUNIT(req, res);
-
-  if (unitUsed.WATERUNIT > minUnit) {
-    price = (unitUsed.WATERUNIT - minUnit) * pricePerUnit + minPrice;
-    console.log(
-      unitUsed.WATERUNIT,
-      ' - ',
-      minUnit,
-      ' * ',
-      pricePerUnit,
-      ' + ',
-      minPrice
-    );
-  } else {
-    price = minPrice;
-  }
-  console.log('price: ', price);
-  return price;
+  return minWaterPrice.dataValues.MINWATERPRICE;
 };
 
-const ADD_UNIT_USED = async (req, res) => {
-  const waterUnit = await GET_WUNIT(req, res);
-  const electricityUnit = await GET_EUNIT(req, res);
+const getRoomNoByRoomId = async (roomID) => {
+  const roomNo = await roomModel.findOne({
+    attributes: ['ROOMNO'],
+    where: {
+      ROOMID: roomID,
+    },
+  });
+  return roomNo.dataValues.ROOMNO;
+}
+
+const calculateAndSummary = async (req, res) => {
+  const { dormID } = req.params;
+  let { arrayMeter } = req.body;
+
+  const electricPricePerUnit = await getElectricPricePerUnit(dormID);
+  const waterPricePerUnit = await getWaterPricePerUnit(dormID);
+  const minWaterUnit = await getMinWaterUnit(dormID);
+  const minWaterPrice = await getMinWaterPrice(dormID);
   const todayDate = new Date().toISOString().slice(0, 10);
-  const roomID = req.params.roomID;
+  let summary = [];
 
-  // ADD_UNIT_USED
-  const unit_used = {
-    WATERUNIT: waterUnit,
-    ELECTRICIRYUNIT: electricityUnit,
-    UNITUSEDDATE: todayDate,
-    ROOMID: roomID,
-  };
-  console.log(unit_used);
+  for (let i = 0; i < arrayMeter.length; i++) {
+    let oldElectricMeterNo = await getOldElectricMeterNo(arrayMeter[i].roomID);
+    let electricMeterNo = arrayMeter[i].electricMeterNo ? Number(arrayMeter[i].electricMeterNo) : oldElectricMeterNo;
+    let oldWaterMeterNo = await getOldWaterMeterNo(arrayMeter[i].roomID);
+    let waterMeterNo = arrayMeter[i].waterMeterNo ? Number(arrayMeter[i].waterMeterNo) : oldWaterMeterNo;
+    let electricUnit = 0;
+    let waterUnit = 0;
 
-  // ADD_ELECTRICITY_METER
-  const electricityMeter = {
-    ELECTRICITYNO: req.body.eMeterNo,
-    METERDATE: todayDate,
-    ROOMID: roomID,
-  };
-  console.log(electricityMeter);
+    // console.log("oldElectricMeterNo ", oldElectricMeterNo);
+    // console.log("electricMeterNo ", electricMeterNo);
+    // console.log("oldWaterMeterNo ", oldWaterMeterNo);
+    // console.log("waterMeterNo ", waterMeterNo);
 
-  // ADD_WATER_METER
-  const waterMeter = {
-    WATERNO: req.body.wMeterNo,
-    METERDATE: todayDate,
-    ROOMID: roomID,
-  };
-  console.log(waterMeter);
+    if (electricMeterNo < oldElectricMeterNo && waterMeterNo < oldWaterMeterNo) {
+      // Electric
+      electricMeterNo += 9999.9;
+      electricUnit = electricMeterNo - oldElectricMeterNo;
+      // Water
+      waterMeterNo += 9999.999;
+      waterUnit = waterMeterNo - oldWaterMeterNo;
 
-  eMeter
-    .create(electricityMeter)
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: err.message,
-      });
-    });
+    } else if (electricMeterNo < oldElectricMeterNo && waterMeterNo > oldWaterMeterNo) {
+      // Electric
+      electricMeterNo += 9999.9;
+      electricUnit = electricMeterNo - oldElectricMeterNo;
+      // Water
+      waterUnit = waterMeterNo - oldWaterMeterNo;
 
-  wMeter
-    .create(waterMeter)
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: err.message,
-      });
-    });
+    } else if (electricMeterNo > oldElectricMeterNo && waterMeterNo < oldWaterMeterNo) {
+      // Electric
+      electricUnit = electricMeterNo - oldElectricMeterNo;
+      // Water
+      waterMeterNo += 9999.999;
+      waterUnit = waterMeterNo - oldWaterMeterNo;
 
-  unitUsed
-    .create(unit_used)
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: err.message,
-      });
-    });
+    } else if (electricMeterNo > oldElectricMeterNo && waterMeterNo > oldWaterMeterNo) {
+      // Electric
+      electricUnit = electricMeterNo - oldElectricMeterNo;
+      // Water
+      waterUnit = waterMeterNo - oldWaterMeterNo;
 
-  return unit_used;
+    } else if (electricMeterNo < oldElectricMeterNo && waterMeterNo == oldWaterMeterNo) {
+      // Electric
+      electricMeterNo += 9999.9;
+      electricUnit = electricMeterNo - oldElectricMeterNo;
+      // Water
+      waterUnit = 0;
+
+    } else if (electricMeterNo > oldElectricMeterNo && waterMeterNo == oldWaterMeterNo) {
+      // Electric
+      electricUnit = electricMeterNo - oldElectricMeterNo;
+      // Water
+      waterUnit = 0;
+
+    } else if (electricMeterNo == oldElectricMeterNo && waterMeterNo < oldWaterMeterNo) {
+      // Electric
+      electricUnit = 0;
+      // Water
+      waterMeterNo += 9999.999;
+      waterUnit = waterMeterNo - oldWaterMeterNo;
+
+    } else if (electricMeterNo == oldElectricMeterNo && waterMeterNo > oldWaterMeterNo) {
+      // Electric
+      electricUnit = 0;
+      // Water
+      waterUnit = waterMeterNo - oldWaterMeterNo;
+    }
+
+    let electricPrice = Number((electricUnit * electricPricePerUnit).toFixed(2));
+    let waterPrice = 0;
+    if (waterUnit > minWaterUnit) {
+      waterPrice = Number(((waterUnit - minWaterUnit) * waterPricePerUnit + minWaterPrice).toFixed(2));
+
+    } else {
+      waterPrice = minWaterPrice;
+    }
+
+    const unitUsedData = {
+      WATERUNIT: Number(waterUnit.toFixed(3)),
+      ELECTRICIRYUNIT: Number(electricUnit.toFixed(1)),
+      UNITUSEDDATE: todayDate,
+      ROOMID: arrayMeter[i].roomID
+    };
+
+    const invoiceDetailElectricData = {
+      PRICE: electricPrice,
+      COSTID: 2,
+      // INVOICEID:
+    };
+
+    const invoiceDetailWaterData = {
+      PRICE: waterPrice,
+      COSTID: 3,
+      // INVOICEID:
+    };
+
+    const electricMeterData = {
+      ELECTRICITYNO: Number(arrayMeter[i].electricMeterNo),
+      METERDATE: todayDate,
+      ROOMID: arrayMeter[i].roomID,
+    };
+
+    const waterMeterData = {
+      WATERNO: Number(arrayMeter[i].waterMeterNo),
+      METERDATE: todayDate,
+      ROOMID: arrayMeter[i].roomID,
+    };
+
+    const summaryData = {
+      roomNo: await getRoomNoByRoomId(arrayMeter[i].roomID),
+      electricUnit: Number(electricUnit.toFixed(1)),
+      electricPrice: electricPrice,
+      waterUnit: Number(waterUnit.toFixed(3)),
+      waterPrice: waterPrice,
+      totalPrice: Number((electricPrice + waterPrice).toFixed(2)),
+    }
+
+    // console.log(unitUsedData);
+    // console.log(invoiceDetailElectricData);
+    // console.log(invoiceDetailWaterData);
+    // console.log(electricMeterData);
+    // console.log(waterMeterData);
+
+    // await unitUsedModel.create(unitUsedData);
+    // await invoiceDetail.create(invoiceDetailElectricData);
+    // await invoiceDetail.create(invoiceDetailWaterData);
+    // await electricMeterModel.create(electricMeterData);
+    // await waterMeterModel.create(waterMeterData);
+
+    summary.push(summaryData);
+
+  }
+  return res.status(200).send(summary);
 };
 
-module.exports = { GET_EPRICE, GET_WPRICE, ADD_UNIT_USED };
+module.exports = { calculateAndSummary };
