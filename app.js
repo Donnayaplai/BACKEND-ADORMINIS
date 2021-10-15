@@ -22,21 +22,25 @@ app.use(express.static(path.join(__dirname, 'public')));
 // const router = require('./routes/index');
 // app.use('/api', router);
 
-//Room
+// Room
 const roomRouter = require('./routes/room');
 app.use('/api/room', roomRouter);
 
-//building
+// Building
 const buildingRouter = require('./routes/building');
 app.use('/api/building', buildingRouter);
 
-//User
+// User
 const userRouter = require('./routes/user');
 app.use('/api/user', userRouter);
 
-//Dorm
+// Dorm
 const dormSettingRouter = require('./routes/dormSetting');
 app.use('/setting', dormSettingRouter);
+
+// Calculate
+const calculateRouter = require('./routes/calculateUtility');
+app.use('/calculate', calculateRouter);
 
 app.get('/', (req, res) => {
   res.json({
