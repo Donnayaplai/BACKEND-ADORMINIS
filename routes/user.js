@@ -1,7 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { RESIDENT_INFO } = require('../controllers/residentInfo');
-const { verifyUser, residentRegister, adminRegister, userLogin, getUserDetail } = require('../controllers/user');
+const {
+  verifyUser,
+  residentRegister,
+  adminRegister,
+  userLogin,
+  getUserDetail,
+} = require('../controllers/user');
 const { validation } = require('../middleware/formValidation');
 const { verifyUserSchema } = require('../schema/verifyUser');
 const { residentRegisterSchema } = require('../schema/residentRegister');
@@ -16,9 +22,14 @@ router.get('/info/:roomID', async (req, res) => {
 
 router.post('/verifyUser', verifyUserSchema, validation, verifyUser);
 
-router.post('/register/:userId', residentRegisterSchema, validation, residentRegister);
+router.post(
+  '/register/:userId',
+  residentRegisterSchema,
+  validation,
+  residentRegister
+);
 
-router.post('/adminRegister', adminRegisterSchema, validation, adminRegister);
+router.post('/adminRegister', adminRegister);
 
 router.post('/login', userLogin);
 
