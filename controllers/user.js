@@ -34,7 +34,7 @@ const verifyUser = async (req, res) => {
 };
 
 const residentRegister = async (req, res) => {
-  var { email, password } = req.body;
+  let { email, password } = req.body;
   const { userId } = req.params;
   try {
     const user = await userModel.findOne({
@@ -72,9 +72,8 @@ const residentRegister = async (req, res) => {
 };
 
 const adminRegister = async (req, res) => {
-  var { fName, lName, telNo, gender, idCardNo, dateOfBirth, email, password } =
-    req.body;
-  console.log(req.body, '************');
+  let { fName, lName, telNo, gender, idCardNo, dateOfBirth, email, password } = req.body;
+
   try {
     const user = await userModel.findOne({
       attributes: ['EMAIL'],
@@ -111,7 +110,7 @@ const adminRegister = async (req, res) => {
 };
 
 const userLogin = async (req, res) => {
-  var { email, password } = req.body;
+  let { email, password } = req.body;
   try {
     const user = await userModel.findOne({
       where: {
@@ -141,8 +140,6 @@ const userLogin = async (req, res) => {
           TOKEN: token,
           ROLEID: payload.dataValues.ROLEID,
         };
-
-        console.log(data);
         res.status(200).send(data);
       }
     });
@@ -199,10 +196,4 @@ const getUserDetail = async (req, res) => {
   )
 };
 
-module.exports = {
-  verifyUser,
-  residentRegister,
-  adminRegister,
-  userLogin,
-  getUserDetail,
-};
+module.exports = { verifyUser, residentRegister, adminRegister, userLogin, getUserDetail, };
