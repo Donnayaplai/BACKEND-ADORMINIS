@@ -258,8 +258,8 @@ const getRoomSetingByDormID = async (req, res) => {
     const { dormID } = req.params;
 
     const roomList = await db.query(
-        `SELECT r.ROOMID AS ROOMID, r.ROOMNO AS ROOMNO, r.FLOOR AS FLOOR, r.STATUS AS STATUS, r.BUILDINGID AS BUILDINGID, 
-        b.BUILDINGNAME AS BUILDINGNAME, r.ROOMTYPEID AS ROOMTYPEID, rt.ROOMNAME AS ROOMNAME
+        `SELECT r.ROOMID , r.ROOMNO , r.FLOOR , r.STATUS , r.BUILDINGID , 
+        b.BUILDINGNAME , r.ROOMTYPEID , rt.ROOMNAME 
         FROM ROOM r JOIN BUILDING b 
         ON r.BUILDINGID = b.BUILDINGID 
         JOIN DORMITORY d 
