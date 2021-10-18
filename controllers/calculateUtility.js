@@ -6,28 +6,30 @@ const settingModel = require('../models/setting');
 const roomModel = require('../models/room');
 const db = require('../config/dbConnection');
 
-const getOldElectricMeterNo = async (roomID) => {
+const getOldElectricMeterNo = async (roomID, previousBillingCycle) => {
   const electricMeterNo = await db.query(
     `SELECT ELECTRICITYNO 
-        FROM ELECTRICITYMETER 
-        WHERE ROOMID = ? 
-        ORDER BY METERDATE DESC LIMIT 1`,
+      FROM ELECTRICITYMETER 
+      WHERE ROOMID = :roomID 
+      AND METERDATE LIKE :previousBillingCycle
+      ORDER BY EMETERID DESC LIMIT 1`,
     {
-      replacements: [roomID],
+      replacements: { roomID: roomID, previousBillingCycle: previousBillingCycle + '%' },
       type: db.QueryTypes.SELECT,
     }
   );
   return electricMeterNo[0].ELECTRICITYNO;
 };
 
-const getOldWaterMeterNo = async (roomID) => {
+const getOldWaterMeterNo = async (roomID, previousBillingCycle) => {
   const waterMeterNo = await db.query(
     `SELECT WATERNO 
-        FROM WATERMETER 
-        WHERE ROOMID = ? 
-        ORDER BY METERDATE DESC LIMIT 1`,
+      FROM WATERMETER 
+      WHERE ROOMID = :roomID 
+      AND METERDATE LIKE :previousBillingCycle
+      ORDER BY WMETERID DESC LIMIT 1`,
     {
-      replacements: [roomID],
+      replacements: { roomID: roomID, previousBillingCycle: previousBillingCycle + '%' },
       type: db.QueryTypes.SELECT,
     }
   );
@@ -82,7 +84,60 @@ const getRoomNoByRoomId = async (roomID) => {
     },
   });
   return roomNo.dataValues.ROOMNO;
-}
+};
+
+const getOldMeterNo = async (req, res) => {
+  const { dormID } = req.params;
+
+  const todayDate = new Date().toISOString().slice(0, 10);
+  const thisBillingYear = todayDate.slice(0, 4);
+  const thisBillingMonth = todayDate.slice(5, 7);
+  const thisBillingCycle = todayDate.slice(0, 7);
+  let previousBillingCycle = '';
+
+  if (thisBillingMonth == 1) {
+    let year = Number(thisBillingYear) - 1
+    let month = 12
+    previousBillingCycle = year + '-' + month
+  } else {
+    let year = thisBillingYear
+    let month = Number(thisBillingMonth) - 1
+    if (month < 10) { month = '0' + month }
+    previousBillingCycle = year + '-' + month
+  }
+
+  const roomList = await db.query(
+    `SELECT b.BUILDINGNAME , r.ROOMID , r.ROOMNO , r.STATUS
+      FROM DORMITORY d JOIN BUILDING b 
+      ON d.DORMID = b.DORMID 
+      JOIN ROOM r 
+      ON b.BUILDINGID = r.BUILDINGID
+      WHERE d.DORMID = ?`,
+    {
+      replacements: [dormID],
+      type: db.QueryTypes.SELECT,
+    }
+  );
+
+  let arrayData = [];
+
+  for (let i = 0; i < roomList.length; i++) {
+    let oldElectricMeterNo = await getOldElectricMeterNo(roomList[i].ROOMID, previousBillingCycle);
+    let oldWaterMeterNo = await getOldWaterMeterNo(roomList[i].ROOMID, previousBillingCycle);
+
+    const data = {
+      buildingName: roomList[i].BUILDINGNAME,
+      roomID: roomList[i].ROOMID,
+      roomNo: roomList[i].ROOMNO,
+      status: roomList[i].STATUS,
+      oldElectricMeterNo: oldElectricMeterNo,
+      oldWaterMeterNo: oldWaterMeterNo
+    }
+
+    arrayData.push(data);
+  }
+  return res.status(200).send({ thisBillingCycle, arrayData })
+};
 
 const calculateAndSummary = async (req, res) => {
   const { dormID } = req.params;
@@ -93,20 +148,31 @@ const calculateAndSummary = async (req, res) => {
   const minWaterUnit = await getMinWaterUnit(dormID);
   const minWaterPrice = await getMinWaterPrice(dormID);
   const todayDate = new Date().toISOString().slice(0, 10);
+  const thisBillingYear = todayDate.slice(0, 4);
+  const thisBillingMonth = todayDate.slice(5, 7);
+  const thisBillingCycle = todayDate.slice(0, 7);
+  let previousBillingCycle = '';
+
+  if (thisBillingMonth == 1) {
+    let year = Number(thisBillingYear) - 1
+    let month = 12
+    previousBillingCycle = year + '-' + month
+  } else {
+    let year = thisBillingYear
+    let month = Number(thisBillingMonth) - 1
+    if (month < 10) { month = '0' + month }
+    previousBillingCycle = year + '-' + month
+  }
+
   let summary = [];
 
   for (let i = 0; i < arrayMeter.length; i++) {
-    let oldElectricMeterNo = await getOldElectricMeterNo(arrayMeter[i].roomID);
+    let oldElectricMeterNo = await getOldElectricMeterNo(arrayMeter[i].roomID, previousBillingCycle);
     let electricMeterNo = arrayMeter[i].electricMeterNo ? Number(arrayMeter[i].electricMeterNo) : oldElectricMeterNo;
-    let oldWaterMeterNo = await getOldWaterMeterNo(arrayMeter[i].roomID);
+    let oldWaterMeterNo = await getOldWaterMeterNo(arrayMeter[i].roomID, previousBillingCycle);
     let waterMeterNo = arrayMeter[i].waterMeterNo ? Number(arrayMeter[i].waterMeterNo) : oldWaterMeterNo;
     let electricUnit = 0;
     let waterUnit = 0;
-
-    // console.log("oldElectricMeterNo ", oldElectricMeterNo);
-    // console.log("electricMeterNo ", electricMeterNo);
-    // console.log("oldWaterMeterNo ", oldWaterMeterNo);
-    // console.log("waterMeterNo ", waterMeterNo);
 
     if (electricMeterNo < oldElectricMeterNo && waterMeterNo < oldWaterMeterNo) {
       // Electric
@@ -161,6 +227,12 @@ const calculateAndSummary = async (req, res) => {
       electricUnit = 0;
       // Water
       waterUnit = waterMeterNo - oldWaterMeterNo;
+
+    } else if (electricMeterNo == oldElectricMeterNo && waterMeterNo == oldWaterMeterNo) {
+      // Electric
+      electricUnit = 0;
+      // Water
+      waterUnit = 0;
     }
 
     let electricPrice = Number((electricUnit * electricPricePerUnit).toFixed(2));
@@ -225,9 +297,8 @@ const calculateAndSummary = async (req, res) => {
     // await waterMeterModel.create(waterMeterData);
 
     summary.push(summaryData);
-
   }
-  return res.status(200).send(summary);
+  return res.status(200).send({ thisBillingCycle, summary });
 };
 
-module.exports = { calculateAndSummary };
+module.exports = { getOldMeterNo, calculateAndSummary };
