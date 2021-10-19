@@ -163,34 +163,19 @@ const uocBuildings = async (req, res) => {
             }
         });
 
-        if (i == arrayBuilding.length - 1) {
-
-            if (!isBuilding) {
-
-                await buildingModel.create(building)
-                return res.status(200).send("Success");
-
-            } else {
-                await buildingModel.update(building, {
-                    where: {
-                        BUILDINGID: building.BUILDINGID
-                    }
-                });
-                return res.status(200).send("Success");
-            }
+        if (!isBuilding) {
+            await buildingModel.create(building)
 
         } else {
+            await buildingModel.update(building, {
+                where: {
+                    BUILDINGID: building.BUILDINGID
+                }
+            });
+        }
 
-            if (!isBuilding) {
-                await buildingModel.create(building)
-
-            } else {
-                await buildingModel.update(building, {
-                    where: {
-                        BUILDINGID: building.BUILDINGID
-                    }
-                });
-            }
+        if (i == arrayBuilding.length - 1) {
+            return res.status(200).send("Success")
         }
     }
 };
@@ -222,34 +207,20 @@ const uocRoomTypes = async (req, res) => {
             }
         });
 
-        if (i == arrayRoomTypes.length - 1) {
+        if (!isRoomType) {
 
-            if (!isRoomType) {
-                await roomTypeModel.create(roomType)
-                return res.status(200).send("Success");
-
-            } else {
-                await roomTypeModel.update(roomType, {
-                    where: {
-                        ROOMTYPEID: roomType.ROOMTYPEID
-                    }
-                });
-                return res.status(200).send("Success");
-            }
+            await roomTypeModel.create(roomType)
 
         } else {
+            await roomTypeModel.update(roomType, {
+                where: {
+                    ROOMTYPEID: roomType.ROOMTYPEID
+                }
+            });
+        }
 
-            if (!isRoomType) {
-
-                await roomTypeModel.create(roomType)
-
-            } else {
-                await roomTypeModel.update(roomType, {
-                    where: {
-                        ROOMTYPEID: roomType.ROOMTYPEID
-                    }
-                });
-            }
+        if (i == arrayRoomTypes.length - 1) {
+            return res.status(200).send("Success");
         }
     }
 };
@@ -299,33 +270,19 @@ const uocRoomSeting = async (req, res) => {
             }
         });
 
-        if (i == arrayRoom.length - 1) {
-
-            if (!isRoom) {
-                await roomModel.create(room)
-                return res.status(200).send("Success");
-
-            } else {
-                await roomModel.update(room, {
-                    where: {
-                        ROOMID: room.ROOMID
-                    }
-                });
-                return res.status(200).send("Success");
-            }
+        if (!isRoom) {
+            await roomModel.create(room)
 
         } else {
+            await roomModel.update(room, {
+                where: {
+                    ROOMID: room.ROOMID
+                }
+            });
+        }
 
-            if (!isRoom) {
-                await roomModel.create(room)
-
-            } else {
-                await roomModel.update(room, {
-                    where: {
-                        ROOMID: room.ROOMID
-                    }
-                });
-            }
+        if (i == arrayRoom.length - 1) {
+            return res.status(200).send("Success");
         }
     }
 };
