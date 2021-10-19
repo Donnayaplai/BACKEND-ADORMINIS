@@ -112,31 +112,33 @@ const getOldMeterNo = async (req, res) => {
       ON d.DORMID = b.DORMID 
       JOIN ROOM r 
       ON b.BUILDINGID = r.BUILDINGID
-      WHERE d.DORMID = ?`,
+      WHERE d.DORMID = ?
+      ORDER BY r.ROOMID`,
     {
       replacements: [dormID],
       type: db.QueryTypes.SELECT,
     }
   );
 
-  let arrayData = [];
+  const lastIndexId = roomList[roomList.length - 1].ROOMID;
 
-  for (let i = 0; i < roomList.length; i++) {
-    let oldElectricMeterNo = await getOldElectricMeterNo(roomList[i].ROOMID, previousBillingCycle);
-    let oldWaterMeterNo = await getOldWaterMeterNo(roomList[i].ROOMID, previousBillingCycle);
+  let arrayRoomWithMeter = [];
 
-    const data = {
-      buildingName: roomList[i].BUILDINGNAME,
-      roomID: roomList[i].ROOMID,
-      roomNo: roomList[i].ROOMNO,
-      status: roomList[i].STATUS,
-      oldElectricMeterNo: oldElectricMeterNo,
-      oldWaterMeterNo: oldWaterMeterNo
+  roomList.forEach(async (roomList) => {
+
+    arrayRoomWithMeter.push({
+      buildingName: roomList.BUILDINGNAME,
+      roomID: roomList.ROOMID,
+      roomNo: roomList.ROOMNO,
+      status: roomList.STATUS,
+      oldElectricMeterNo: await getOldElectricMeterNo(roomList.ROOMID, previousBillingCycle),
+      oldWaterMeterNo: await getOldWaterMeterNo(roomList.ROOMID, previousBillingCycle)
+    });
+
+    if (roomList.ROOMID == lastIndexId) {
+      return res.status(200).send({ thisBillingCycle, arrayRoomWithMeter });
     }
-
-    arrayData.push(data);
-  }
-  return res.status(200).send({ thisBillingCycle, arrayData })
+  })
 };
 
 const calculateAndSummary = async (req, res) => {
