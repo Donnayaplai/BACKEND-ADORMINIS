@@ -112,30 +112,27 @@ const getOldMeterNo = async (req, res) => {
       ON d.DORMID = b.DORMID 
       JOIN ROOM r 
       ON b.BUILDINGID = r.BUILDINGID
-      WHERE d.DORMID = ?
-      ORDER BY r.ROOMID`,
+      WHERE d.DORMID = ?`,
     {
       replacements: [dormID],
       type: db.QueryTypes.SELECT,
     }
   );
 
-  const lastIndexId = roomList[roomList.length - 1].ROOMID;
-
   let arrayRoomWithMeter = [];
 
-  roomList.forEach(async (roomList) => {
+  roomList.forEach(async (rl) => {
 
     arrayRoomWithMeter.push({
-      buildingName: roomList.BUILDINGNAME,
-      roomID: roomList.ROOMID,
-      roomNo: roomList.ROOMNO,
-      status: roomList.STATUS,
-      oldElectricMeterNo: await getOldElectricMeterNo(roomList.ROOMID, previousBillingCycle),
-      oldWaterMeterNo: await getOldWaterMeterNo(roomList.ROOMID, previousBillingCycle)
+      buildingName: rl.BUILDINGNAME,
+      roomID: rl.ROOMID,
+      roomNo: rl.ROOMNO,
+      status: rl.STATUS,
+      oldElectricMeterNo: await getOldElectricMeterNo(rl.ROOMID, previousBillingCycle),
+      oldWaterMeterNo: await getOldWaterMeterNo(rl.ROOMID, previousBillingCycle)
     });
 
-    if (roomList.ROOMID == lastIndexId) {
+    if (arrayRoomWithMeter.length == roomList.length) {
       return res.status(200).send({ thisBillingCycle, arrayRoomWithMeter });
     }
   })
@@ -168,11 +165,11 @@ const calculateAndSummary = async (req, res) => {
 
   let summary = [];
 
-  for (let i = 0; i < arrayMeter.length; i++) {
-    let oldElectricMeterNo = await getOldElectricMeterNo(arrayMeter[i].roomID, previousBillingCycle);
-    let electricMeterNo = arrayMeter[i].electricMeterNo ? Number(arrayMeter[i].electricMeterNo) : oldElectricMeterNo;
-    let oldWaterMeterNo = await getOldWaterMeterNo(arrayMeter[i].roomID, previousBillingCycle);
-    let waterMeterNo = arrayMeter[i].waterMeterNo ? Number(arrayMeter[i].waterMeterNo) : oldWaterMeterNo;
+  arrayMeter.forEach(async (am) => {
+    let oldElectricMeterNo = await getOldElectricMeterNo(am.roomID, previousBillingCycle);
+    let electricMeterNo = am.electricMeterNo ? Number(am.electricMeterNo) : oldElectricMeterNo;
+    let oldWaterMeterNo = await getOldWaterMeterNo(am.roomID, previousBillingCycle);
+    let waterMeterNo = am.waterMeterNo ? Number(am.waterMeterNo) : oldWaterMeterNo;
     let electricUnit = 0;
     let waterUnit = 0;
 
@@ -250,7 +247,7 @@ const calculateAndSummary = async (req, res) => {
       WATERUNIT: Number(waterUnit.toFixed(3)),
       ELECTRICIRYUNIT: Number(electricUnit.toFixed(1)),
       UNITUSEDDATE: todayDate,
-      ROOMID: arrayMeter[i].roomID
+      ROOMID: am.roomID
     };
 
     const invoiceDetailElectricData = {
@@ -266,25 +263,25 @@ const calculateAndSummary = async (req, res) => {
     };
 
     const electricMeterData = {
-      ELECTRICITYNO: Number(arrayMeter[i].electricMeterNo),
+      ELECTRICITYNO: Number(am.electricMeterNo),
       METERDATE: todayDate,
-      ROOMID: arrayMeter[i].roomID,
+      ROOMID: am.roomID,
     };
 
     const waterMeterData = {
-      WATERNO: Number(arrayMeter[i].waterMeterNo),
+      WATERNO: Number(am.waterMeterNo),
       METERDATE: todayDate,
-      ROOMID: arrayMeter[i].roomID,
+      ROOMID: am.roomID,
     };
 
     const summaryData = {
-      roomNo: await getRoomNoByRoomId(arrayMeter[i].roomID),
+      roomNo: await getRoomNoByRoomId(am.roomID),
       electricUnit: Number(electricUnit.toFixed(1)),
       electricPrice: electricPrice,
       waterUnit: Number(waterUnit.toFixed(3)),
       waterPrice: waterPrice,
       totalPrice: Number((electricPrice + waterPrice).toFixed(2)),
-    }
+    };
 
     // console.log(unitUsedData);
     // console.log(invoiceDetailElectricData);
@@ -299,8 +296,11 @@ const calculateAndSummary = async (req, res) => {
     // await waterMeterModel.create(waterMeterData);
 
     summary.push(summaryData);
-  }
-  return res.status(200).send({ thisBillingCycle, summary });
+
+    if (summary.length == arrayMeter.length) {
+      return res.status(200).send({ thisBillingCycle, summary });
+    }
+  })
 };
 
 module.exports = { getOldMeterNo, calculateAndSummary };
