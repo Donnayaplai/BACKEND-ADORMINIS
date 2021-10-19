@@ -27,7 +27,24 @@ SETTING.init(
     MULTPREPAID: {
       type: DataTypes.INTEGER,
     },
-
+    MAINTENANCEFEE: {
+      type: DataTypes.DECIMAL,
+    },
+    PARKINGFEE: {
+      type: DataTypes.DECIMAL,
+    },
+    INTERNETFEE: {
+      type: DataTypes.DECIMAL,
+    },
+    CLEANINGFEE: {
+      type: DataTypes.DECIMAL,
+    },
+    OTHER: {
+      type: DataTypes.DECIMAL,
+    },
+    INVOICEDATE: {
+      type: DataTypes.INTEGER,
+    },
     DORMID: {
       type: DataTypes.INTEGER,
     },
