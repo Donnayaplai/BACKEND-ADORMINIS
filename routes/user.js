@@ -8,10 +8,6 @@ const {
   userLogin,
   getUserDetail,
 } = require('../controllers/user');
-const { validation } = require('../middleware/formValidation');
-const { verifyUserSchema } = require('../schema/verifyUser');
-const { residentRegisterSchema } = require('../schema/residentRegister');
-const { adminRegisterSchema } = require('../schema/adminRegister');
 
 //Get resident info RoomTable page
 router.get('/info/:roomID', async (req, res) => {
@@ -20,14 +16,9 @@ router.get('/info/:roomID', async (req, res) => {
   res.json(residentInfo);
 });
 
-router.post('/verifyUser', verifyUserSchema, validation, verifyUser);
+router.post('/verifyUser', verifyUser);
 
-router.post(
-  '/register/:userId',
-  residentRegisterSchema,
-  validation,
-  residentRegister
-);
+router.post('/register/:userId', residentRegister);
 
 router.post('/adminRegister', adminRegister);
 

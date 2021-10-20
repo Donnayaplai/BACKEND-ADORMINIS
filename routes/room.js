@@ -2,14 +2,12 @@ const express = require('express');
 const router = express.Router();
 const rentController = require('../controllers/rent');
 const roomController = require('../controllers/room');
-const { validation } = require('../middleware/formValidation');
-const { addUserToRoomSchema } = require('../schema/addUserToRoom');
 
 // Get all room by buildingID
 router.get('/all/:buildingID', roomController.getAllRoomByBuildingID);
 
 // Add resident to specific room
-router.post('/:buildingID/:roomID', addUserToRoomSchema, validation, async (req, res) => {
+router.post('/:buildingID/:roomID', async (req, res) => {
   req.params.roomID;
   req.params.buildingID;
   console.log("Add resident to room ID ", req.params.roomID);
