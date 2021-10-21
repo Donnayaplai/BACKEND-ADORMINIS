@@ -42,6 +42,17 @@ app.use('/setting', dormSettingRouter);
 const calculateRouter = require('./routes/calculateUtility');
 app.use('/calculate', calculateRouter);
 
+// Invoice
+const invoiceRouter = require('./routes/invoice');
+app.use('/invoice', invoiceRouter);
+
+// Test data formats
+app.use('/testja', (req, res) => {
+  const { testDate } = req.body;
+
+  console.log(testDate);
+});
+
 app.get('/', (req, res) => {
   res.json({
     message: 'API Running',
