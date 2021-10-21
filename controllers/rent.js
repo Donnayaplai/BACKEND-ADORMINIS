@@ -1,10 +1,8 @@
-require('sequelize');
 const userModel = require('../models/user');
 const rentModel = require('../models/rent');
 const roomModel = require('../models/room');
 const CoRModel = require('../models/contractOfRent');
 const settingModel = require('../models/setting');
-
 const db = require('../config/dbConnection');
 
 const getDormIDByBuildingID = async (buildingID) => {
@@ -131,6 +129,25 @@ const getOldCoRAndRentDetail = async (rentID, CoRID) => {
     ENDDATE: oldEndDate.dataValues.ENDDATE,
   };
   return data;
+};
+
+const checkRoomStatus = async (req, res) => {
+  const { roomID } = req.params;
+
+  const roomStatus = await roomModel.findOne({
+    attributes: ['STATUS'],
+    where: {
+      ROOMID: roomID,
+    },
+  });
+
+  if (roomStatus.dataValues.STATUS == 0) {
+    // Have other user, disable checkbox
+    return res.status(200).send({status: false})
+  } else {
+    // No have user, enable checkbox
+    return res.status(200).send({status: true})
+  }
 };
 
 const addUserToRoom = async (req, res) => {
@@ -410,4 +427,4 @@ const removeUser = async (req, res) => {
   return res.status(200).send(message);
 };
 
-module.exports = { addUserToRoom, editCoRAndRentInfo, removeUser };
+module.exports = { checkRoomStatus, addUserToRoom, editCoRAndRentInfo, removeUser };
