@@ -1,6 +1,8 @@
+const { Op } = require("sequelize");
 const electricMeterModel = require('../models/electricityMeter');
 const waterMeterModel = require('../models/waterMeter');
-const invoiceDetail = require('../models/invoiceDetail');
+const invoiceModel = require('../models/invoice');
+const invoiceDetailModel = require('../models/invoiceDetail');
 const unitUsedModel = require('../models/unitUsed');
 const settingModel = require('../models/setting');
 const roomModel = require('../models/room');
@@ -74,6 +76,17 @@ const getMinWaterPrice = async (dormID) => {
     },
   });
   return minWaterPrice.dataValues.MINWATERPRICE;
+};
+
+const getInvoiceId = async (roomID, thisBillingCycle) => {
+  const id = await invoiceModel.findOne({
+    attributes: ['INVOICEID'],
+    where: {
+      ROOMID: roomID,
+      INVOICEDATE: { [Op.startsWith]: thisBillingCycle }
+    },
+  })
+  return id.dataValues.INVOICEID;
 };
 
 const getRoomNoByRoomId = async (roomID) => {
@@ -250,18 +263,6 @@ const calculateAndSummary = async (req, res) => {
       ROOMID: am.roomID
     };
 
-    const invoiceDetailElectricData = {
-      PRICE: electricPrice,
-      COSTID: 2,
-      // INVOICEID:
-    };
-
-    const invoiceDetailWaterData = {
-      PRICE: waterPrice,
-      COSTID: 3,
-      // INVOICEID:
-    };
-
     const electricMeterData = {
       ELECTRICITYNO: Number(am.electricMeterNo),
       METERDATE: todayDate,
@@ -283,17 +284,36 @@ const calculateAndSummary = async (req, res) => {
       totalPrice: Number((electricPrice + waterPrice).toFixed(2)),
     };
 
-    // console.log(unitUsedData);
-    // console.log(invoiceDetailElectricData);
-    // console.log(invoiceDetailWaterData);
-    // console.log(electricMeterData);
-    // console.log(waterMeterData);
+    const isAvailable = await roomModel.findOne({
+      where: {
+        ROOMID: am.roomID,
+        STATUS: 1
+      },
+    });
 
-    // await unitUsedModel.create(unitUsedData);
-    // await invoiceDetail.create(invoiceDetailElectricData);
-    // await invoiceDetail.create(invoiceDetailWaterData);
-    // await electricMeterModel.create(electricMeterData);
-    // await waterMeterModel.create(waterMeterData);
+    if (!isAvailable) {
+
+      await invoiceDetailModel.create({
+        PRICE: electricPrice,
+        COSTID: 2,
+        INVOICEID: await getInvoiceId(am.roomID, thisBillingCycle),
+      });
+
+      await invoiceDetailModel.create({
+        PRICE: waterPrice,
+        COSTID: 3,
+        INVOICEID: await getInvoiceId(am.roomID, thisBillingCycle),
+      });
+    }
+
+    console.log(unitUsedData);
+    await unitUsedModel.create(unitUsedData);
+
+    console.log(electricMeterData);
+    await electricMeterModel.create(electricMeterData);
+
+    console.log(waterMeterData);
+    await waterMeterModel.create(waterMeterData);
 
     summary.push(summaryData);
 
