@@ -35,8 +35,12 @@ const userRouter = require('./routes/user');
 app.use('/api/user', userRouter);
 
 // Dorm
-const dormSettingRouter = require('./routes/dormSetting');
-app.use('/setting', dormSettingRouter);
+const dormRouter = require('./routes/dorm');
+app.use('/dorm', dormRouter);
+
+// Setting
+const settingRouter = require('./routes/setting');
+app.use('/setting', settingRouter);
 
 // Calculate
 const calculateRouter = require('./routes/calculateUtility');
