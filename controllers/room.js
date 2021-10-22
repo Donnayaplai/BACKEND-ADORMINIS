@@ -78,42 +78,39 @@ const getRoomInfo = async (req, res) => {
   return res.status(200).send({ roomName: roomName, roomPrice: roomPrice, listOfCost })
 };
 
-const removeCost = async (req, res) => {
+const editCost = async (req, res) => {
   const { roomID } = req.params;
-  const { costId } = req.body;
+  const { listOfCost } = req.body;
 
-  if (costId == 4) {
-    await listOfCostModel.update({ MAINTENANCEFEE: 0 }, {
-      where: {
-        ROOMID: roomID,
-      },
-    });
-  } else if (costId == 5) {
-    await listOfCostModel.update({ PARKINGFEE: 0 }, {
-      where: {
-        ROOMID: roomID,
-      },
-    });
-  } else if (costId == 6) {
-    await listOfCostModel.update({ INTERNETFEE: 0 }, {
-      where: {
-        ROOMID: roomID,
-      },
-    });
-  } else if (costId == 7) {
-    await listOfCostModel.update({ CLEANINGFEE: 0 }, {
-      where: {
-        ROOMID: roomID,
-      },
-    });
-  } else if (costId == 8) {
-    await listOfCostModel.update({ OTHER: 0 }, {
-      where: {
-        ROOMID: roomID,
-      },
-    });
+  let insertData = {
+    MAINTENANCEFEE: 0,
+    PARKINGFEE: 0,
+    INTERNETFEE: 0,
+    CLEANINGFEE: 0,
+    OTHER: 0
   }
+
+  listOfCost.forEach(async (loc) => {
+    if (loc == 4) {
+      insertData.MAINTENANCEFEE = 1;
+    } else if (loc == 5) {
+      insertData.PARKINGFEE = 1;
+    } else if (loc == 6) {
+      insertData.INTERNETFEE = 1;
+    } else if (loc == 7) {
+      insertData.CLEANINGFEE = 1
+    } else if (loc == 8) {
+      insertData.OTHER = 1
+    }
+  })
+
+  await listOfCostModel.update(insertData, {
+    where: {
+      ROOMID: roomID,
+    },
+  })
+
   return res.status(200).send("Success")
 };
 
-module.exports = { getAllRoomByBuildingID, getRoomInfo, removeCost };
+module.exports = { getAllRoomByBuildingID, getRoomInfo, editCost };

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { checkRoomStatus, addUserToRoom, editCoRAndRentInfo, removeUser } = require('../controllers/rent');
-const { getAllRoomByBuildingID, getRoomInfo, removeCost } = require('../controllers/room');
+const { getAllRoomByBuildingID, getRoomInfo, editCost } = require('../controllers/room');
 
 // Get all room by buildingID
 router.get('/all/:buildingID', getAllRoomByBuildingID);
@@ -13,7 +13,7 @@ router.get('/status/:roomID', checkRoomStatus);
 router.get('/info/:dormID/:roomID', getRoomInfo);
 
 // Remove cost in specific room
-router.post('/removeCost/:roomID', removeCost);
+router.post('/editCost/:roomID', editCost);
 
 // Add resident to specific room
 router.post('/:buildingID/:roomID', async (req, res) => {
