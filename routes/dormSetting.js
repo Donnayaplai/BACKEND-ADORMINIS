@@ -7,6 +7,9 @@ const { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildin
 // Create new dormitory
 router.post('/', createNewDorm);
 
+// Create new dormitory
+router.post('/updateDorm/:dormID', updateDormInfo);
+
 // Get old cost setting detail
 router.get('/getCost/:dormID', getCostSettingByDormID);
 
