@@ -287,47 +287,4 @@ const uocRoomSeting = async (req, res) => {
     }
 };
 
-const updateDormInfo = async (req, res) => {
-    const { dormID } = req.params;
-    const {
-        dormNameTH,
-        dormNameENG,
-        address,
-        province,
-        street,
-        postCode,
-        telNo,
-        subdistrict,
-        district
-    } = req.body;
-
-    const dormInfo = {
-        DORMNAMETH: dormNameTH ? dormNameTH : null,
-        DORMNAMEENG: dormNameENG ? dormNameENG : null,
-        ADDRESS: address ? address : null,
-        PROVINCE: province ? province : null,
-        STREET: street ? street : null,
-        POSTCODE: postCode ? postCode : null,
-        TELNO: telNo ? telNo : null,
-        SUBDISTRICT: subdistrict ? subdistrict : null,
-        DISTRICT: district ? district : null,
-    };
-
-    dormModel.update(dormInfo, {
-        where: {
-            DORMID: dormID
-        }
-    })
-        .then(data => {
-            res.status(200).send(data);
-            console.log("Info updated!!");
-        })
-        .catch(err => {
-            res.status(500).send({
-                message:
-                    err.message
-            });
-        });
-};
-
-module.exports = { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildings, getRoomTypesByDormID, uocRoomTypes, getRoomSetingByDormID, uocRoomSeting, updateDormInfo };
+module.exports = { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildings, getRoomTypesByDormID, uocRoomTypes, getRoomSetingByDormID, uocRoomSeting };

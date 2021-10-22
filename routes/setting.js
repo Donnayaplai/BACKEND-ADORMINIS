@@ -1,14 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { createNewDorm } = require('../controllers/dorm');
-const { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildings, getRoomTypesByDormID, uocRoomTypes, getRoomSetingByDormID, uocRoomSeting, updateDormInfo } = require('../controllers/setting')
-
-// Create new dormitory
-router.post('/', createNewDorm);
-
-// Create new dormitory
-router.post('/updateDorm/:dormID', updateDormInfo);
+const { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildings, getRoomTypesByDormID, uocRoomTypes, getRoomSetingByDormID, uocRoomSeting } = require('../controllers/setting')
 
 // Get old cost setting detail
 router.get('/getCost/:dormID', getCostSettingByDormID);
