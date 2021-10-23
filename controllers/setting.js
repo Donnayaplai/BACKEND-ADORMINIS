@@ -1,9 +1,10 @@
 require("Sequelize");
-const dormModel = require('../models/dorm');
 const settingModel = require('../models/setting');
 const buildingModel = require('../models/building');
 const roomTypeModel = require('../models/roomType');
 const roomModel = require('../models/room');
+const electricMeterModel = require('../models/electricityMeter');
+const waterMeterModel = require('../models/waterMeter');
 const listOfCostModel = require('../models/listOfCost');
 const db = require('../config/dbConnection');
 
@@ -273,8 +274,10 @@ const uocRoomSeting = async (req, res) => {
 
         if (!isRoom) {
             let roomInsertId;
-            await roomModel.create(room).then(resultId => roomInsertId = resultId.null)
-            await listOfCostModel.create({ ROOMID: roomInsertId })
+            await roomModel.create(room).then(resultId => roomInsertId = resultId.null);
+            await listOfCostModel.create({ ROOMID: roomInsertId });
+            await electricMeterModel.create({ ROOMID: roomInsertId });
+            await waterMeterModel.create({ ROOMID: roomInsertId });
 
         } else {
             await roomModel.update(room, {
