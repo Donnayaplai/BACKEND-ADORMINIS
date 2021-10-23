@@ -3,6 +3,7 @@ const rentModel = require('../models/rent');
 const roomModel = require('../models/room');
 const CoRModel = require('../models/contractOfRent');
 const settingModel = require('../models/setting');
+const listOfCostModel = require('../models/listOfCost');
 const db = require('../config/dbConnection');
 
 const getDormIDByBuildingID = async (buildingID) => {
@@ -143,10 +144,10 @@ const checkRoomStatus = async (req, res) => {
 
   if (roomStatus.dataValues.STATUS == 0) {
     // Have other user, disable checkbox
-    return res.status(200).send({status: false})
+    return res.status(200).send({ status: false })
   } else {
     // No have user, enable checkbox
-    return res.status(200).send({status: true})
+    return res.status(200).send({ status: true })
   }
 };
 
@@ -163,6 +164,7 @@ const addUserToRoom = async (req, res) => {
     startDate,
     endDate,
     checkInDate,
+    listOfCost,
   } = req.body;
 
   const userStatus = await isUserInRoom(idCardNo);
@@ -293,6 +295,46 @@ const addUserToRoom = async (req, res) => {
     roomModel
       .update(
         { STATUS: 0 },
+        {
+          where: {
+            ROOMID: roomID,
+          },
+        }
+      )
+      .then((data) => {
+        return data;
+      })
+      .catch((err) => {
+        console.log(err);
+        return {
+          message: err.message,
+        };
+      });
+
+    let costs = {
+      MAINTENANCEFEE: 0,
+      PARKINGFEE: 0,
+      INTERNETFEE: 0,
+      CLEANINGFEE: 0,
+      OTHER: 0
+    };
+
+    listOfCost.forEach(async (loc) => {
+      if (loc == 4) {
+        costs.MAINTENANCEFEE = 1;
+      } else if (loc == 5) {
+        costs.PARKINGFEE = 1;
+      } else if (loc == 6) {
+        costs.INTERNETFEE = 1;
+      } else if (loc == 7) {
+        costs.CLEANINGFEE = 1
+      } else if (loc == 8) {
+        costs.OTHER = 1
+      }
+    })
+
+    listOfCostModel
+      .update(costs,
         {
           where: {
             ROOMID: roomID,
