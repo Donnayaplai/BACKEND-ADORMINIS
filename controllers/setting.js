@@ -4,6 +4,7 @@ const settingModel = require('../models/setting');
 const buildingModel = require('../models/building');
 const roomTypeModel = require('../models/roomType');
 const roomModel = require('../models/room');
+const listOfCostModel = require('../models/listOfCost');
 const db = require('../config/dbConnection');
 
 const getOldCostSettingDetail = async (settingID) => {
@@ -271,7 +272,9 @@ const uocRoomSeting = async (req, res) => {
         });
 
         if (!isRoom) {
-            await roomModel.create(room)
+            let roomInsertId;
+            await roomModel.create(room).then(resultId => roomInsertId = resultId.null)
+            await listOfCostModel.create({ ROOMID: roomInsertId })
 
         } else {
             await roomModel.update(room, {
