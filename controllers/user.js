@@ -151,16 +151,14 @@ const userLogin = async (req, res) => {
 
 const getUserDetail = async (req, res) => {
   const { authorization } = req.headers;
-
-  jwt.verify(authorization, process.env.AUTH_KEY,
-    async (err, userDetail) => {
-      if (err) {
-        res.status(400).send(err.message);
-      } else {
-
-        if (userDetail.ROLEID == 0) {
-          const user = await db.query(
-            `SELECT  u.USERID, u.FNAME, u.LNAME, u.EMAIL, u.ROLEID, r.RENTID, r2.ROOMID, r2.ROOMNO, d.DORMID, d.DORMNAMETH 
+  console.log(authorization);
+  jwt.verify(authorization, process.env.AUTH_KEY, async (err, userDetail) => {
+    if (err) {
+      res.status(400).send(err.message);
+    } else {
+      if (userDetail.ROLEID == 0) {
+        const user = await db.query(
+          `SELECT  u.USERID, u.FNAME, u.LNAME, u.EMAIL, u.ROLEID, r.RENTID, r2.ROOMID, r2.ROOMNO, d.DORMID, d.DORMNAMETH 
             FROM USER u JOIN RENT r 
             ON u.USERID =r.USERID 
             JOIN ROOM r2 
@@ -171,29 +169,30 @@ const getUserDetail = async (req, res) => {
             ON b.DORMID = d.DORMID 
             WHERE u.USERID = ?
             AND r.CHECKOUTDATE IS NULL`,
-            {
-              replacements: [userDetail.USERID],
-              type: db.QueryTypes.SELECT,
-            });
-          res.status(200).send(user[0]);
-
-        } else if (userDetail.ROLEID == 1) {
-          user = await db.query(
-            `SELECT  u.USERID, u.FNAME, u.LNAME, u.EMAIL,  u.ROLEID, d.DORMID, d.DORMNAMETH 
+          {
+            replacements: [userDetail.USERID],
+            type: db.QueryTypes.SELECT,
+          }
+        );
+        console.log(user);
+        res.status(200).send(user[0]);
+      } else if (userDetail.ROLEID == 1) {
+        user = await db.query(
+          `SELECT  u.USERID, u.FNAME, u.LNAME, u.EMAIL,  u.ROLEID, d.DORMID, d.DORMNAMETH 
             FROM USER u JOIN MANAGE m 
             ON u.USERID = m.USERID 
             JOIN DORMITORY d 
             ON m.DORMID = d.DORMID
             WHERE u.USERID = ?`,
-            {
-              replacements: [userDetail.USERID],
-              type: db.QueryTypes.SELECT,
-            });
-          res.status(200).send(user[0]);
-        }
+          {
+            replacements: [userDetail.USERID],
+            type: db.QueryTypes.SELECT,
+          }
+        );
+        res.status(200).send(user[0]);
       }
     }
-  )
+  });
 };
 
 module.exports = { verifyUser, residentRegister, adminRegister, userLogin, getUserDetail, };

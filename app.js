@@ -52,9 +52,9 @@ app.use('/invoice', invoiceRouter);
 
 // Test data formats
 app.use('/testja', (req, res) => {
-  const { testDate } = req.body;
+  const { roomTypes } = req.body;
 
-  console.log(testDate);
+  console.log(roomTypes);
 });
 
 app.get('/', (req, res) => {

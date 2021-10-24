@@ -144,10 +144,10 @@ const checkRoomStatus = async (req, res) => {
 
   if (roomStatus.dataValues.STATUS == 0) {
     // Have other user, disable checkbox
-    return res.status(200).send({ status: false })
+    return res.status(200).send({ status: false });
   } else {
     // No have user, enable checkbox
-    return res.status(200).send({ status: true })
+    return res.status(200).send({ status: true });
   }
 };
 
@@ -166,6 +166,7 @@ const addUserToRoom = async (req, res) => {
     checkInDate,
     listOfCost,
   } = req.body;
+  console.log(req.body);
 
   const userStatus = await isUserInRoom(idCardNo);
 
@@ -316,7 +317,7 @@ const addUserToRoom = async (req, res) => {
       PARKINGFEE: 0,
       INTERNETFEE: 0,
       CLEANINGFEE: 0,
-      OTHER: 0
+      OTHER: 0,
     };
 
     listOfCost.forEach(async (loc) => {
@@ -327,20 +328,18 @@ const addUserToRoom = async (req, res) => {
       } else if (loc == 6) {
         costs.INTERNETFEE = 1;
       } else if (loc == 7) {
-        costs.CLEANINGFEE = 1
+        costs.CLEANINGFEE = 1;
       } else if (loc == 8) {
-        costs.OTHER = 1
+        costs.OTHER = 1;
       }
-    })
+    });
 
     listOfCostModel
-      .update(costs,
-        {
-          where: {
-            ROOMID: roomID,
-          },
-        }
-      )
+      .update(costs, {
+        where: {
+          ROOMID: roomID,
+        },
+      })
       .then((data) => {
         return data;
       })
@@ -469,4 +468,9 @@ const removeUser = async (req, res) => {
   return res.status(200).send(message);
 };
 
-module.exports = { checkRoomStatus, addUserToRoom, editCoRAndRentInfo, removeUser };
+module.exports = {
+  checkRoomStatus,
+  addUserToRoom,
+  editCoRAndRentInfo,
+  removeUser,
+};
