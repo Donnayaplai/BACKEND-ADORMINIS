@@ -42,8 +42,8 @@ const getElectricPricePerUnit = async (dormID) => {
   const settingPrice = await settingModel.findOne({
     attributes: ['ELECTRICITYPRICE'],
     where: {
-      DORMID: dormID,
-    },
+      DORMID: dormID
+    }
   });
   return settingPrice.dataValues.ELECTRICITYPRICE;
 };
@@ -52,8 +52,8 @@ const getWaterPricePerUnit = async (dormID) => {
   const settingPrice = await settingModel.findOne({
     attributes: ['WATERPRICE'],
     where: {
-      DORMID: dormID,
-    },
+      DORMID: dormID
+    }
   });
   return settingPrice.dataValues.WATERPRICE;
 };
@@ -62,8 +62,8 @@ const getMinWaterUnit = async (dormID) => {
   const minWaterUnit = await settingModel.findOne({
     attributes: ['MINWATERUNIT'],
     where: {
-      DORMID: dormID,
-    },
+      DORMID: dormID
+    }
   });
   return minWaterUnit.dataValues.MINWATERUNIT;
 };
@@ -72,10 +72,20 @@ const getMinWaterPrice = async (dormID) => {
   const minWaterPrice = await settingModel.findOne({
     attributes: ['MINWATERPRICE'],
     where: {
-      DORMID: dormID,
-    },
+      DORMID: dormID
+    }
   });
   return minWaterPrice.dataValues.MINWATERPRICE;
+};
+
+const getRoomNoByRoomId = async (roomID) => {
+  const roomNo = await roomModel.findOne({
+    attributes: ['ROOMNO'],
+    where: {
+      ROOMID: roomID
+    }
+  });
+  return roomNo.dataValues.ROOMNO;
 };
 
 const getInvoiceId = async (roomID, thisBillingCycle) => {
@@ -84,19 +94,25 @@ const getInvoiceId = async (roomID, thisBillingCycle) => {
     where: {
       ROOMID: roomID,
       INVOICEDATE: { [Op.startsWith]: thisBillingCycle }
-    },
-  })
+    }
+  });
   return id.dataValues.INVOICEID;
 };
 
-const getRoomNoByRoomId = async (roomID) => {
-  const roomNo = await roomModel.findOne({
-    attributes: ['ROOMNO'],
+const sumPrice = async (invoiceID) => {
+  const price = await invoiceDetailModel.findAll({
+    attributes: ['PRICE'],
     where: {
-      ROOMID: roomID,
-    },
+      INVOICEID: invoiceID
+    }
   });
-  return roomNo.dataValues.ROOMNO;
+
+  let totalPrice = 0;
+
+  price.forEach(async (p) => {
+    totalPrice += p.dataValues.PRICE;
+  })
+  return totalPrice
 };
 
 const getOldMeterNo = async (req, res) => {
@@ -293,17 +309,49 @@ const calculateAndSummary = async (req, res) => {
 
     if (!isAvailable) {
 
-      await invoiceDetailModel.create({
-        PRICE: electricPrice,
-        COSTID: 2,
-        INVOICEID: await getInvoiceId(am.roomID, thisBillingCycle),
+      const invoiceID = await getInvoiceId(am.roomID, thisBillingCycle);
+      const isElectricCost = await invoiceDetailModel.findOne({ where: { COSTID: 2, INVOICEID: invoiceID } });
+      const isWaterCost = await invoiceDetailModel.findOne({ where: { COSTID: 3, INVOICEID: invoiceID } });
+
+      if (!isElectricCost) {
+        await invoiceDetailModel.create({
+          PRICE: electricPrice,
+          COSTID: 2,
+          INVOICEID: invoiceID
+        });
+      } else {
+        await invoiceDetailModel.update({
+          PRICE: electricPrice,
+          where: {
+            COSTID: 2,
+            INVOICEID: invoiceID
+          }
+        });
+      }
+
+      if (!isWaterCost) {
+        await invoiceDetailModel.create({
+          PRICE: waterPrice,
+          COSTID: 3,
+          INVOICEID: invoiceID
+        });
+      } else {
+        await invoiceDetailModel.update({
+          PRICE: waterPrice,
+          where: {
+            COSTID: 3,
+            INVOICEID: invoiceID
+          }
+        });
+      }
+
+      await invoiceModel.update({
+        TOTALPRICE: await sumPrice(invoiceID),
+        where: {
+          INVOICEID: invoiceID
+        }
       });
 
-      await invoiceDetailModel.create({
-        PRICE: waterPrice,
-        COSTID: 3,
-        INVOICEID: await getInvoiceId(am.roomID, thisBillingCycle),
-      });
     }
 
     console.log(unitUsedData);
