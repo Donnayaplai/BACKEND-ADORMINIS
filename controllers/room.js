@@ -70,19 +70,19 @@ const getRoomInfo = async (req, res) => {
   const { MAINTENANCEFEE: maintenancePrice, PARKINGFEE: parkingPrice, INTERNETFEE: internetPrice, CLEANINGFEE: cleaningPrice, OTHER: otherPrice } = await getDormSetting(dormID);
 
   if (cost.dataValues.MAINTENANCEFEE == true) {
-    listOfCost.push({ costId: "4", costName: "ส่วนกลาง", constPrice: maintenancePrice })
+    listOfCost.push({ costId: "4", costName: "ส่วนกลาง", costPrice: maintenancePrice })
   };
   if (cost.dataValues.PARKINGFEE == true) {
-    listOfCost.push({ costId: "5", costName: "ที่จอดรถ", constPrice: parkingPrice })
+    listOfCost.push({ costId: "5", costName: "ที่จอดรถ", costPrice: parkingPrice })
   };
   if (cost.dataValues.INTERNETFEE == true) {
-    listOfCost.push({ costId: "6", costName: "อินเทอร์เน็ต", constPrice: internetPrice })
+    listOfCost.push({ costId: "6", costName: "อินเทอร์เน็ต", costPrice: internetPrice })
   };
   if (cost.dataValues.CLEANINGFEE == true) {
-    listOfCost.push({ costId: "7", costName: "รักษาความสะอาด", constPrice: cleaningPrice })
+    listOfCost.push({ costId: "7", costName: "รักษาความสะอาด", costPrice: cleaningPrice })
   };
   if (cost.dataValues.OTHER == true) {
-    listOfCost.push({ costId: "8", costName: "อื่น ๆ", constPrice: otherPrice })
+    listOfCost.push({ costId: "8", costName: "อื่น ๆ", costPrice: otherPrice })
   };
 
   return res.status(200).send({ roomNo: await getRoomNo(roomID), roomName: roomName, roomPrice: roomPrice, listOfCost })
