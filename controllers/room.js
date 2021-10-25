@@ -4,6 +4,16 @@ const roomTypeModel = require('../models/roomType');
 const settingModel = require('../models/setting')
 const listOfCostModel = require('../models/listOfCost');
 
+const getRoomNo = async (roomID) => {
+  const roomNo = await roomModel.findOne({
+    attributes: ['ROOMNO'],
+    where: {
+      ROOMID: roomID
+    }
+  })
+  return roomNo.dataValues.ROOMNO;
+};
+
 const getAllRoomByBuildingID = (req, res) => {
   const { buildingID } = req.params;
   roomModel
@@ -75,7 +85,7 @@ const getRoomInfo = async (req, res) => {
     listOfCost.push({ costId: "8", costName: "อื่น ๆ", constPrice: otherPrice })
   };
 
-  return res.status(200).send({ roomName: roomName, roomPrice: roomPrice, listOfCost })
+  return res.status(200).send({ roomNo: await getRoomNo(roomID), roomName: roomName, roomPrice: roomPrice, listOfCost })
 };
 
 const editCost = async (req, res) => {
