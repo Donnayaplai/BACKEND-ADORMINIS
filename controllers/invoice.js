@@ -179,9 +179,28 @@ const getAdminInvoiceList = async (req, res) => {
     return res.status(200).send(roomList);
 };
 
+const getResidentInvoiceList = async (req, res) => {
+    const { rentID } = req.params;
+
+    const invoiceList = await db.query(
+        `SELECT i.INVOICEID AS "invoiceID" , i.TOTALPRICE AS "totalPrice" , SUBSTRING(i.INVOICEDATE,1,7) AS "billingCycle" , 
+        SUBSTRING(i.INVOICEDATE,1,4) AS "billingYear" , SUBSTRING(i.INVOICEDATE,6,2) AS "billingMonth"
+        FROM INVOICE i 
+        JOIN ROOM r 
+        ON i.ROOMID = r.ROOMID
+        JOIN RENT r2 
+        ON r.ROOMID  = r2.ROOMID 
+        WHERE r2.RENTID = ?`,
+        {
+            replacements: [rentID],
+            type: db.QueryTypes.SELECT,
+        }
+    );
+    return res.status(200).send(invoiceList);
+};
+
 const getInvoiceDetail = async (req, res) => {
-    const { dormID } = req.params;
-    const { invoiceID } = req.body;
+    const { invoiceID, dormID } = req.params;
 
     const roomInvoice = await db.query(
         `SELECT r.ROOMID , r.ROOMNO , i.INVOICEDATE , i.TOTALPRICE 
@@ -239,4 +258,4 @@ const getInvoiceDetail = async (req, res) => {
     return res.status(200).send(data);
 };
 
-module.exports = { createInvoice, getAdminInvoiceList, getInvoiceDetail };
+module.exports = { createInvoice, getAdminInvoiceList, getResidentInvoiceList, getInvoiceDetail };
