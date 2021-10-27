@@ -195,4 +195,17 @@ const getUserDetail = async (req, res) => {
   });
 };
 
-module.exports = { verifyUser, residentRegister, adminRegister, userLogin, getUserDetail, };
+const getUserInfo = async (req, res) => {
+  const { userID } = req.params;
+
+  const info = await userModel.findOne({
+    attributes: ['USERID', 'FNAME', 'LNAME', 'TELNO', 'GENDER', 'IDCARDNO', 'DATEOFBIRTH', 'ADDRESS', 'EMAIL'],
+    where: {
+      USERID: userID
+    }
+  });
+
+  return res.status(200).send(info.dataValues);
+};
+
+module.exports = { verifyUser, residentRegister, adminRegister, userLogin, getUserDetail, getUserInfo };
