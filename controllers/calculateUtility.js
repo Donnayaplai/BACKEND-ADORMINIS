@@ -1,23 +1,21 @@
 const { Op } = require("sequelize");
-const electricMeterModel = require('../models/electricityMeter');
-const waterMeterModel = require('../models/waterMeter');
-const invoiceModel = require('../models/invoice');
-const invoiceDetailModel = require('../models/invoiceDetail');
-const unitUsedModel = require('../models/unitUsed');
-const settingModel = require('../models/setting');
-const roomModel = require('../models/room');
 const db = require('../config/dbConnection');
+const electricMeterModel = require('../models/electricityMeter');
+const invoiceDetailModel = require('../models/invoiceDetail');
+const invoiceModel = require('../models/invoice');
+const roomModel = require('../models/room');
+const settingModel = require('../models/setting');
+const unitUsedModel = require('../models/unitUsed');
+const waterMeterModel = require('../models/waterMeter');
+const meterQuery = require('../queries/meter');
+const roomQuery = require('../queries/room');
 
 const getOldElectricMeterNo = async (roomID, previousBillingCycle) => {
   const electricMeterNo = await db.query(
-    `SELECT ELECTRICITYNO 
-      FROM ELECTRICITYMETER 
-      WHERE ROOMID = :roomID 
-      AND METERDATE LIKE :previousBillingCycle
-      ORDER BY EMETERID DESC LIMIT 1`,
+    meterQuery.getOldElectricMeterNo,
     {
       replacements: { roomID: roomID, previousBillingCycle: previousBillingCycle + '%' },
-      type: db.QueryTypes.SELECT,
+      type: db.QueryTypes.SELECT
     }
   );
   return electricMeterNo[0].ELECTRICITYNO;
@@ -25,78 +23,74 @@ const getOldElectricMeterNo = async (roomID, previousBillingCycle) => {
 
 const getOldWaterMeterNo = async (roomID, previousBillingCycle) => {
   const waterMeterNo = await db.query(
-    `SELECT WATERNO 
-      FROM WATERMETER 
-      WHERE ROOMID = :roomID 
-      AND METERDATE LIKE :previousBillingCycle
-      ORDER BY WMETERID DESC LIMIT 1`,
+    meterQuery.getOldWaterMeterNo,
     {
       replacements: { roomID: roomID, previousBillingCycle: previousBillingCycle + '%' },
-      type: db.QueryTypes.SELECT,
+      type: db.QueryTypes.SELECT
     }
   );
   return waterMeterNo[0].WATERNO;
 };
 
 const getElectricPricePerUnit = async (dormID) => {
-  const settingPrice = await settingModel.findOne({
+  const { ELECTRICITYPRICE: electricityPrice } = await settingModel.findOne({
     attributes: ['ELECTRICITYPRICE'],
     where: {
       DORMID: dormID
     }
   });
-  return settingPrice.dataValues.ELECTRICITYPRICE;
+  return electricityPrice;
 };
 
 const getWaterPricePerUnit = async (dormID) => {
-  const settingPrice = await settingModel.findOne({
+  const { WATERPRICE: waterPrice } = await settingModel.findOne({
     attributes: ['WATERPRICE'],
     where: {
       DORMID: dormID
     }
   });
-  return settingPrice.dataValues.WATERPRICE;
+  return waterPrice;
 };
 
 const getMinWaterUnit = async (dormID) => {
-  const minWaterUnit = await settingModel.findOne({
+  const { MINWATERUNIT: minWaterUnit } = await settingModel.findOne({
     attributes: ['MINWATERUNIT'],
     where: {
       DORMID: dormID
     }
   });
-  return minWaterUnit.dataValues.MINWATERUNIT;
+  return minWaterUnit;
 };
 
 const getMinWaterPrice = async (dormID) => {
-  const minWaterPrice = await settingModel.findOne({
+  const { MINWATERPRICE: minWaterPrice } = await settingModel.findOne({
     attributes: ['MINWATERPRICE'],
     where: {
       DORMID: dormID
     }
   });
-  return minWaterPrice.dataValues.MINWATERPRICE;
+  return minWaterPrice;
 };
 
 const getRoomNoByRoomId = async (roomID) => {
-  const roomNo = await roomModel.findOne({
+  const { ROOMNO: roomNo } = await roomModel.findOne({
     attributes: ['ROOMNO'],
     where: {
       ROOMID: roomID
     }
   });
-  return roomNo.dataValues.ROOMNO;
+  return roomNo;
 };
 
 const getInvoiceId = async (roomID, thisBillingCycle) => {
-  const id = await invoiceModel.findOne({
+  const { INVOICEID: invoiceId } = await invoiceModel.findOne({
     attributes: ['INVOICEID'],
     where: {
       ROOMID: roomID,
       INVOICEDATE: { [Op.startsWith]: thisBillingCycle }
     }
   });
-  return id.dataValues.INVOICEID;
+  return invoiceId;
 };
 
 const sumPrice = async (invoiceID) => {
@@ -116,12 +110,11 @@ const sumPrice = async (invoiceID) => {
 };
 
 const getOldMeterNo = async (req, res) => {
-  const { dormID } = req.params;
+  const { buildingID } = req.params;
 
-  const todayDate = new Date().toISOString().slice(0, 10);
-  const thisBillingYear = todayDate.slice(0, 4);
-  const thisBillingMonth = todayDate.slice(5, 7);
-  const thisBillingCycle = todayDate.slice(0, 7);
+  const thisBillingCycle = new Date().toISOString().slice(0, 7);
+  const thisBillingYear = thisBillingCycle.slice(0, 4);
+  const thisBillingMonth = thisBillingCycle.slice(5, 7);
   let previousBillingCycle = '';
 
   if (thisBillingMonth == 1) {
@@ -136,15 +129,10 @@ const getOldMeterNo = async (req, res) => {
   }
 
   const roomList = await db.query(
-    `SELECT b.BUILDINGNAME , r.ROOMID , r.ROOMNO , r.STATUS
-      FROM DORMITORY d JOIN BUILDING b 
-      ON d.DORMID = b.DORMID 
-      JOIN ROOM r 
-      ON b.BUILDINGID = r.BUILDINGID
-      WHERE d.DORMID = ?`,
+    roomQuery.getRoomListByBuildingID,
     {
-      replacements: [dormID],
-      type: db.QueryTypes.SELECT,
+      replacements: [buildingID],
+      type: db.QueryTypes.SELECT
     }
   );
 
@@ -156,6 +144,7 @@ const getOldMeterNo = async (req, res) => {
       buildingName: rl.BUILDINGNAME,
       roomID: rl.ROOMID,
       roomNo: rl.ROOMNO,
+      floor: rl.FLOOR,
       status: rl.STATUS,
       oldElectricMeterNo: await getOldElectricMeterNo(rl.ROOMID, previousBillingCycle),
       oldWaterMeterNo: await getOldWaterMeterNo(rl.ROOMID, previousBillingCycle)
@@ -282,13 +271,13 @@ const calculateAndSummary = async (req, res) => {
     const electricMeterData = {
       ELECTRICITYNO: Number(am.electricMeterNo),
       METERDATE: todayDate,
-      ROOMID: am.roomID,
+      ROOMID: am.roomID
     };
 
     const waterMeterData = {
       WATERNO: Number(am.waterMeterNo),
       METERDATE: todayDate,
-      ROOMID: am.roomID,
+      ROOMID: am.roomID
     };
 
     const summaryData = {
@@ -297,14 +286,14 @@ const calculateAndSummary = async (req, res) => {
       electricPrice: electricPrice,
       waterUnit: Number(waterUnit.toFixed(3)),
       waterPrice: waterPrice,
-      totalPrice: Number((electricPrice + waterPrice).toFixed(2)),
+      totalPrice: Number((electricPrice + waterPrice).toFixed(2))
     };
 
     const isAvailable = await roomModel.findOne({
       where: {
         ROOMID: am.roomID,
         STATUS: 1
-      },
+      }
     });
 
     if (!isAvailable) {
@@ -320,13 +309,13 @@ const calculateAndSummary = async (req, res) => {
           INVOICEID: invoiceID
         });
       } else {
-        await invoiceDetailModel.update({
-          PRICE: electricPrice,
-          where: {
-            COSTID: 2,
-            INVOICEID: invoiceID
-          }
-        });
+        await invoiceDetailModel.update({ PRICE: electricPrice },
+          {
+            where: {
+              COSTID: 2,
+              INVOICEID: invoiceID
+            }
+          });
       }
 
       if (!isWaterCost) {
@@ -336,31 +325,28 @@ const calculateAndSummary = async (req, res) => {
           INVOICEID: invoiceID
         });
       } else {
-        await invoiceDetailModel.update({
-          PRICE: waterPrice,
+        await invoiceDetailModel.update({ PRICE: waterPrice },
+          {
+            where: {
+              COSTID: 3,
+              INVOICEID: invoiceID
+            }
+          });
+      }
+
+      await invoiceModel.update({ TOTALPRICE: await sumPrice(invoiceID) },
+        {
           where: {
-            COSTID: 3,
             INVOICEID: invoiceID
           }
         });
-      }
-
-      await invoiceModel.update({
-        TOTALPRICE: await sumPrice(invoiceID),
-        where: {
-          INVOICEID: invoiceID
-        }
-      });
 
     }
 
-    console.log(unitUsedData);
     await unitUsedModel.create(unitUsedData);
 
-    console.log(electricMeterData);
     await electricMeterModel.create(electricMeterData);
 
-    console.log(waterMeterData);
     await waterMeterModel.create(waterMeterData);
 
     summary.push(summaryData);
