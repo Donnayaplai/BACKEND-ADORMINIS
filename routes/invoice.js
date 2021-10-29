@@ -5,13 +5,13 @@ const { createInvoice, getAdminInvoiceList, getResidentInvoiceList, getInvoiceDe
 // Create new invoice
 router.post('/create/:dormID', createInvoice);
 
-// List of invoice in admin view
+// Get the list of invoice for admin side
 router.get('/list/:dormID', getAdminInvoiceList);
 
-// List of invoice in resident view
+// Get resident history invoice list
 router.get('/history/:rentID', getResidentInvoiceList);
 
-// Invoice detail
+// Get all invoice detail
 router.get('/:invoiceID/:dormID', getInvoiceDetail);
 
 module.exports = router;
