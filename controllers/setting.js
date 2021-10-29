@@ -1,12 +1,12 @@
-require('sequelize');
-const settingModel = require('../models/setting');
-const buildingModel = require('../models/building');
-const roomTypeModel = require('../models/roomType');
-const roomModel = require('../models/room');
-const electricMeterModel = require('../models/electricityMeter');
-const waterMeterModel = require('../models/waterMeter');
-const listOfCostModel = require('../models/listOfCost');
 const db = require('../config/dbConnection');
+const buildingModel = require('../models/building');
+const electricMeterModel = require('../models/electricityMeter');
+const listOfCostModel = require('../models/listOfCost');
+const roomModel = require('../models/room');
+const roomTypeModel = require('../models/roomType');
+const settingModel = require('../models/setting');
+const waterMeterModel = require('../models/waterMeter');
+const roomQuery = require('../queries/room');
 
 const getOldCostSettingDetail = async (settingID) => {
   const oldDetail = await settingModel.findOne({
@@ -21,77 +21,63 @@ const getOldCostSettingDetail = async (settingID) => {
       'PARKINGFEE',
       'INTERNETFEE',
       'CLEANINGFEE',
-      'OTHER',
+      'OTHER'
     ],
     where: {
-      SETTINGID: settingID,
-    },
+      SETTINGID: settingID
+    }
   });
   return oldDetail.dataValues;
 };
 
 const getBuildingID = async (buildingName, dormID) => {
-  const buildingID = await buildingModel.findOne({
+  const { BUILDINGID: buildingID } = await buildingModel.findOne({
     attributes: ['BUILDINGID'],
     where: {
       BUILDINGNAME: buildingName,
-      DORMID: dormID,
-    },
+      DORMID: dormID
+    }
   });
-  return buildingID.dataValues.BUILDINGID;
+  return buildingID;
 };
 
 const getRoomTypeID = async (roomTypeName, dormID) => {
-  const roomTypeID = await roomTypeModel.findOne({
+  const { ROOMTYPEID: roomTypeID } = await roomTypeModel.findOne({
     attributes: ['ROOMTYPEID'],
     where: {
       ROOMNAME: roomTypeName,
-      DORMID: dormID,
-    },
+      DORMID: dormID
+    }
   });
-  return roomTypeID.dataValues.ROOMTYPEID;
+  return roomTypeID;
 };
 
 const getCostSettingByDormID = async (req, res) => {
   const { dormID } = req.params;
 
-  const settingID = await settingModel.findOne({
+  const { SETTINGID: settingID } = await settingModel.findOne({
     attributes: ['SETTINGID'],
     where: {
-      DORMID: dormID,
-    },
+      DORMID: dormID
+    }
   });
-  const costSetting = await getOldCostSettingDetail(
-    settingID.dataValues.SETTINGID
-  );
-  return res.status(200).send(costSetting);
+
+  return res.status(200).send(await getOldCostSettingDetail(settingID));
 };
 
 const uocCostSetting = async (req, res) => {
   const { dormID } = req.params;
-
-  const {
-    waterPrice,
-    electricityPrice,
-    minWaterUnit,
-    minWaterPrice,
-    guaranteeFee,
-    multPrePaid,
-    maintenanceFee,
-    parkingFee,
-    internetFee,
-    cleaningFee,
-    other,
-  } = req.body;
+  const { waterPrice, electricityPrice, minWaterUnit, minWaterPrice, guaranteeFee, multPrePaid, maintenanceFee, parkingFee, internetFee, cleaningFee, other, } = req.body;
 
   const isSetting = await settingModel.findOne({
     attributes: ['SETTINGID'],
     where: {
-      DORMID: dormID,
-    },
+      DORMID: dormID
+    }
   });
 
   if (!isSetting) {
+
     const costDetail = {
       WATERPRICE: waterPrice ? waterPrice : 0,
       ELECTRICITYPRICE: electricityPrice ? electricityPrice : 0,
@@ -104,56 +90,64 @@ const uocCostSetting = async (req, res) => {
       INTERNETFEE: internetFee ? internetFee : 0,
       CLEANINGFEE: cleaningFee ? cleaningFee : 0,
       OTHER: other ? other : 0,
-      DORMID: dormID,
+      DORMID: dormID
     };
-    // Create new drom
-    const setting = await settingModel.create(costDetail);
 
-    return res.status(200).send({ setting, created: true });
+    await settingModel.create(costDetail)
+      .then((data) => {
+        return res.status(200).send(data);
+      })
+      .catch((err) => {
+        return res.status(400).send(err.message);
+      });
+
   } else {
-    const settingID = isSetting.dataValues.SETTINGID;
 
+    const settingID = isSetting.dataValues.SETTINGID;
     const oldCostSettingDetail = await getOldCostSettingDetail(settingID);
 
     const costDetail = {
       WATERPRICE: waterPrice ? waterPrice : oldCostSettingDetail.WATERPRICE,
-      ELECTRICITYPRICE: electricityPrice
-        ? electricityPrice
-        : oldCostSettingDetail.ELECTRICITYPRICE,
-      MINWATERUNIT: minWaterUnit
-        ? minWaterUnit
-        : oldCostSettingDetail.MINWATERUNIT,
-      MINWATERPRICE: minWaterPrice
-        ? minWaterPrice
-        : oldCostSettingDetail.MINWATERPRICE,
-      GUARANTEEFEE: guaranteeFee
-        ? guaranteeFee
-        : oldCostSettingDetail.GUARANTEEFEE,
+      ELECTRICITYPRICE: electricityPrice ? electricityPrice : oldCostSettingDetail.ELECTRICITYPRICE,
+      MINWATERUNIT: minWaterUnit ? minWaterUnit : oldCostSettingDetail.MINWATERUNIT,
+      MINWATERPRICE: minWaterPrice ? minWaterPrice : oldCostSettingDetail.MINWATERPRICE,
+      GUARANTEEFEE: guaranteeFee ? guaranteeFee : oldCostSettingDetail.GUARANTEEFEE,
       MULTPREPAID: multPrePaid ? multPrePaid : oldCostSettingDetail.MULTPREPAID,
-      MAINTENANCEFEE: maintenanceFee
-        ? maintenanceFee
-        : oldCostSettingDetail.MAINTENANCEFEE,
+      MAINTENANCEFEE: maintenanceFee ? maintenanceFee : oldCostSettingDetail.MAINTENANCEFEE,
       PARKINGFEE: parkingFee ? parkingFee : oldCostSettingDetail.PARKINGFEE,
       INTERNETFEE: internetFee ? internetFee : oldCostSettingDetail.INTERNETFEE,
       CLEANINGFEE: cleaningFee ? cleaningFee : oldCostSettingDetail.CLEANINGFEE,
-      OTHER: other ? other : oldCostSettingDetail.OTHER,
+      OTHER: other ? other : oldCostSettingDetail.OTHER
     };
-    // Update drom
-    const setting = await settingModel.update(costDetail, {
+
+    await settingModel.update(costDetail, {
       where: {
         DORMID: dormID,
       },
-    });
-    return res.status(200).send({ setting, created: false });
+    })
+      .then((data) => {
+        return res.status(200).send(data);
+      })
+      .catch((err) => {
+        return res.status(400).send(err.message);
+      });
   }
 };
 
 const getBuildingsByDormID = (req, res) => {
   const { dormID } = req.params;
 
-  buildingModel.findAll({ where: { DORMID: dormID } }).then((data) => {
-    res.status(200).send(data);
-  });
+  buildingModel.findAll({
+    where: {
+      DORMID: dormID
+    }
+  })
+    .then((data) => {
+      return res.status(200).send(data);
+    })
+    .catch((err) => {
+      return res.status(400).send(err.message);
+    });
 };
 
 const uocBuildings = async (req, res) => {
@@ -162,9 +156,7 @@ const uocBuildings = async (req, res) => {
 
   for (let i = 0; i < arrayBuilding.length; i++) {
     const building = {
-      BUILDINGID: arrayBuilding[i].BUILDINGID
-        ? arrayBuilding[i].BUILDINGID
-        : null,
+      BUILDINGID: arrayBuilding[i].BUILDINGID ? arrayBuilding[i].BUILDINGID : null,
       BUILDINGNAME: arrayBuilding[i].BUILDINGNAME,
       NUMOFFLOOR: arrayBuilding[i].NUMOFFLOOR,
       DORMID: dormID,
@@ -188,7 +180,7 @@ const uocBuildings = async (req, res) => {
     }
 
     if (i == arrayBuilding.length - 1) {
-      return res.status(200).send('Success');
+      return res.status(200).send("Success");
     }
   }
 };
@@ -196,9 +188,17 @@ const uocBuildings = async (req, res) => {
 const getRoomTypesByDormID = (req, res) => {
   const { dormID } = req.params;
 
-  roomTypeModel.findAll({ where: { DORMID: dormID } }).then((data) => {
-    res.status(200).send(data);
-  });
+  roomTypeModel.findAll({
+    where: {
+      DORMID: dormID
+    }
+  })
+    .then((data) => {
+      return res.status(200).send(data);
+    })
+    .catch((err) => {
+      return res.status(400).send(err.message);
+    });
 };
 
 const uocRoomTypes = async (req, res) => {
@@ -207,9 +207,7 @@ const uocRoomTypes = async (req, res) => {
 
   for (let i = 0; i < arrayRoomTypes.length; i++) {
     const roomType = {
-      ROOMTYPEID: arrayRoomTypes[i].ROOMTYPEID
-        ? arrayRoomTypes[i].ROOMTYPEID
-        : null,
+      ROOMTYPEID: arrayRoomTypes[i].ROOMTYPEID ? arrayRoomTypes[i].ROOMTYPEID : null,
       ROOMNAME: arrayRoomTypes[i].ROOMNAME,
       PRICE: arrayRoomTypes[i].PRICE,
       DORMID: dormID,
@@ -233,7 +231,7 @@ const uocRoomTypes = async (req, res) => {
     }
 
     if (i == arrayRoomTypes.length - 1) {
-      return res.status(200).send('Success');
+      return res.status(200).send("Success");
     }
   }
 };
@@ -242,15 +240,7 @@ const getRoomSetingByDormID = async (req, res) => {
   const { dormID } = req.params;
 
   const roomList = await db.query(
-    `SELECT r.ROOMID , r.ROOMNO , r.FLOOR , r.STATUS , r.BUILDINGID , 
-        b.BUILDINGNAME , r.ROOMTYPEID , rt.ROOMNAME 
-        FROM ROOM r JOIN BUILDING b 
-        ON r.BUILDINGID = b.BUILDINGID 
-        JOIN DORMITORY d 
-        ON b.DORMID = d.DORMID 
-        JOIN ROOM_TYPE rt 
-        ON r.ROOMTYPEID = rt.ROOMTYPEID 
-        WHERE b.DORMID = ?`,
+    roomQuery.getListOfRoomInSetting,
     {
       replacements: [dormID],
       type: db.QueryTypes.SELECT,
@@ -280,14 +270,20 @@ const uocRoomSeting = async (req, res) => {
     });
 
     if (!isRoom) {
+
       let roomInsertId;
-      await roomModel
-        .create(room)
+
+      await roomModel.create(room)
         .then((resultId) => (roomInsertId = resultId.null));
+
       await listOfCostModel.create({ ROOMID: roomInsertId });
+
       await electricMeterModel.create({ ROOMID: roomInsertId });
+
       await waterMeterModel.create({ ROOMID: roomInsertId });
+
     } else {
+
       await roomModel.update(room, {
         where: {
           ROOMID: room.ROOMID,
@@ -296,18 +292,9 @@ const uocRoomSeting = async (req, res) => {
     }
 
     if (i == arrayRoom.length - 1) {
-      return res.status(200).send('Success');
+      return res.status(200).send("Success");
     }
   }
 };
 
-module.exports = {
-  getCostSettingByDormID,
-  uocCostSetting,
-  getBuildingsByDormID,
-  uocBuildings,
-  getRoomTypesByDormID,
-  uocRoomTypes,
-  getRoomSetingByDormID,
-  uocRoomSeting,
-};
+module.exports = { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildings, getRoomTypesByDormID, uocRoomTypes, getRoomSetingByDormID, uocRoomSeting, };

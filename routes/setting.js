@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-
 const { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildings, getRoomTypesByDormID, uocRoomTypes, getRoomSetingByDormID, uocRoomSeting } = require('../controllers/setting')
 
 // Get old cost setting detail
