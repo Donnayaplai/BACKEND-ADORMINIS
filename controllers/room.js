@@ -1,47 +1,31 @@
-require('sequelize');
+const listOfCostModel = require('../models/listOfCost');
 const roomModel = require('../models/room');
 const roomTypeModel = require('../models/roomType');
 const settingModel = require('../models/setting')
-const listOfCostModel = require('../models/listOfCost');
 
 const getRoomNo = async (roomID) => {
-  const roomNo = await roomModel.findOne({
+  const { ROOMNO: roomNo } = await roomModel.findOne({
     attributes: ['ROOMNO'],
     where: {
       ROOMID: roomID
     }
   })
-  return roomNo.dataValues.ROOMNO;
-};
-
-const getAllRoomByBuildingID = (req, res) => {
-  const { buildingID } = req.params;
-  roomModel
-    .findAll({ where: { BUILDINGID: buildingID } })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || 'Some error occurred while retrieving all room.',
-      });
-    });
+  return roomNo;
 };
 
 const getRoomType = async (roomID) => {
-  const room = await roomModel.findOne({
+  const { ROOMTYPEID: roomTypeID } = await roomModel.findOne({
     attributes: ['ROOMTYPEID'],
     where: {
-      ROOMID: roomID,
-    },
+      ROOMID: roomID
+    }
   });
 
   const roomType = await roomTypeModel.findOne({
     attributes: ['ROOMNAME', 'PRICE'],
     where: {
-      ROOMTYPEID: room.dataValues.ROOMTYPEID,
-    },
+      ROOMTYPEID: roomTypeID
+    }
   });
 
   return roomType.dataValues;
@@ -50,38 +34,53 @@ const getRoomType = async (roomID) => {
 const getDormSetting = async (dormID) => {
   const setting = await settingModel.findOne({
     where: {
-      DORMID: dormID,
-    },
+      DORMID: dormID
+    }
   });
   return setting.dataValues;
+};
+
+const getAllRoomByBuildingID = (req, res) => {
+  const { buildingID } = req.params;
+
+  roomModel.findAll({
+    where: {
+      BUILDINGID: buildingID
+    }
+  })
+    .then((data) => {
+      return res.status(200).send(data);
+    })
+    .catch((err) => {
+      return res.status(400).send(err.message);
+    });
 };
 
 const getRoomInfo = async (req, res) => {
   const { dormID, roomID } = req.params;
 
-  const cost = await listOfCostModel.findOne({
+  const { MAINTENANCEFEE: maintenanceFee, PARKINGFEE: parkingFee, INTERNETFEE: internetFee, CLEANINGFEE: cleaningFee, OTHER: other } = await listOfCostModel.findOne({
     where: {
       ROOMID: roomID,
     },
   });
-
-  let listOfCost = []
-  const { ROOMNAME: roomName, PRICE: roomPrice } = await getRoomType(roomID)
+  const { ROOMNAME: roomName, PRICE: roomPrice } = await getRoomType(roomID);
   const { MAINTENANCEFEE: maintenancePrice, PARKINGFEE: parkingPrice, INTERNETFEE: internetPrice, CLEANINGFEE: cleaningPrice, OTHER: otherPrice } = await getDormSetting(dormID);
+  let listOfCost = [];
 
-  if (cost.dataValues.MAINTENANCEFEE == true) {
+  if (maintenanceFee == true) {
     listOfCost.push({ costId: "4", costName: "ส่วนกลาง", costPrice: maintenancePrice })
   };
-  if (cost.dataValues.PARKINGFEE == true) {
+  if (parkingFee == true) {
     listOfCost.push({ costId: "5", costName: "ที่จอดรถ", costPrice: parkingPrice })
   };
-  if (cost.dataValues.INTERNETFEE == true) {
+  if (internetFee == true) {
     listOfCost.push({ costId: "6", costName: "อินเทอร์เน็ต", costPrice: internetPrice })
   };
-  if (cost.dataValues.CLEANINGFEE == true) {
+  if (cleaningFee == true) {
     listOfCost.push({ costId: "7", costName: "รักษาความสะอาด", costPrice: cleaningPrice })
   };
-  if (cost.dataValues.OTHER == true) {
+  if (other == true) {
     listOfCost.push({ costId: "8", costName: "อื่น ๆ", costPrice: otherPrice })
   };
 
@@ -98,7 +97,7 @@ const editCost = async (req, res) => {
     INTERNETFEE: 0,
     CLEANINGFEE: 0,
     OTHER: 0
-  }
+  };
 
   listOfCost.forEach(async (loc) => {
     if (loc == 4) {
@@ -116,11 +115,15 @@ const editCost = async (req, res) => {
 
   await listOfCostModel.update(insertData, {
     where: {
-      ROOMID: roomID,
-    },
+      ROOMID: roomID
+    }
   })
-
-  return res.status(200).send("Success")
+    .then((data) => {
+      return res.status(200).send(data);
+    })
+    .catch((err) => {
+      return res.status(400).send(err.message);
+    });
 };
 
 module.exports = { getAllRoomByBuildingID, getRoomInfo, editCost };
