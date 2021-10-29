@@ -1,20 +1,9 @@
-require('sequelize');
 const dormModel = require('../models/dorm');
 const manageModel = require('../models/manage');
 
 const createNewDorm = async (req, res) => {
   const { userID } = req.params;
-  const {
-    dormNameTH,
-    dormNameENG,
-    address,
-    province,
-    street,
-    postCode,
-    telNo,
-    subdistrict,
-    district
-  } = req.body;
+  const { dormNameTH, dormNameENG, address, province, street, postCode, telNo, subdistrict, district } = req.body;
 
   const dormInfo = {
     DORMNAMETH: dormNameTH ? dormNameTH : null,
@@ -25,25 +14,14 @@ const createNewDorm = async (req, res) => {
     POSTCODE: postCode ? postCode : null,
     TELNO: telNo ? telNo : null,
     SUBDISTRICT: subdistrict ? subdistrict : null,
-    DISTRICT: district ? district : null,
+    DISTRICT: district ? district : null
   };
 
   let dormInsertId;
 
-  await dormModel.create(dormInfo)
-    .then(resultId => dormInsertId = resultId.null)
-    .catch((err) => {
-      res.status(500).send({
-        message: err.message,
-      });
-    });
+  await dormModel.create(dormInfo).then(resultId => dormInsertId = resultId.null);
 
-  await manageModel.create({ USERID: userID, DORMID: dormInsertId })
-    .catch((err) => {
-      res.status(500).send({
-        message: err.message,
-      });
-    });
+  await manageModel.create({ USERID: userID, DORMID: dormInsertId });
 
   return res.status(200).send({ dormID: dormInsertId });
 };
@@ -51,28 +29,22 @@ const createNewDorm = async (req, res) => {
 const getDormInfo = async (req, res) => {
   const { dormID } = req.params;
 
-  const dormInfo = await dormModel.findOne({
+  await dormModel.findOne({
     where: {
       DORMID: dormID
-    },
+    }
   })
-
-  return res.status(200).send(dormInfo.dataValues);
+    .then((data) => {
+      return res.status(200).send(data);
+    })
+    .catch((err) => {
+      return res.status(400).send(err.message);
+    });
 };
 
 const updateDormInfo = async (req, res) => {
   const { dormID } = req.params;
-  const {
-    dormNameTH,
-    dormNameENG,
-    address,
-    province,
-    street,
-    postCode,
-    telNo,
-    subdistrict,
-    district
-  } = req.body;
+  const { dormNameTH, dormNameENG, address, province, street, postCode, telNo, subdistrict, district } = req.body;
 
   const dormInfo = {
     DORMNAMETH: dormNameTH ? dormNameTH : null,
@@ -83,7 +55,7 @@ const updateDormInfo = async (req, res) => {
     POSTCODE: postCode ? postCode : null,
     TELNO: telNo ? telNo : null,
     SUBDISTRICT: subdistrict ? subdistrict : null,
-    DISTRICT: district ? district : null,
+    DISTRICT: district ? district : null
   };
 
   dormModel.update(dormInfo, {
@@ -91,15 +63,11 @@ const updateDormInfo = async (req, res) => {
       DORMID: dormID
     }
   })
-    .then(data => {
-      res.status(200).send(data);
-      console.log("Info updated!!");
+    .then((data) => {
+      return res.status(200).send(data);
     })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message
-      });
+    .catch((err) => {
+      return res.status(400).send(err.message);
     });
 };
 
