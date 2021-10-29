@@ -1,3 +1,4 @@
+// Problem controller
 const getResidentComplaintList = `
     SELECT p.PROBLEMID , p.TITLE , p.INFORMEDDATE , p.STATUS 
     FROM RENT r 
@@ -5,10 +6,10 @@ const getResidentComplaintList = `
     ON r.USERID = u.USERID 
     JOIN PROBLEM p 
     ON u.USERID = p.USERID 
-    WHERE RENTID = ?
+    WHERE r.RENTID = ?
     ORDER BY p.INFORMEDDATE DESC , p.PROBLEMID DESC;
 `
-
+// Problem controller
 const getAdminComplaintList = `
     SELECT p.PROBLEMID , p.TITLE , p.INFORMEDDATE , p.STATUS 
     FROM DORMITORY d 
