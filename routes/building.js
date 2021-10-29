@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const buildingController = require('../controllers/building');
+const { getBuildingByDormID } = require('../controllers/building');
 
-//Get all building by dormID
-router.get('/all/:dormID', buildingController.getBuildingByDormID);
+// Get list of all building
+router.get('/all/:dormID', getBuildingByDormID);
 
 module.exports = router;
