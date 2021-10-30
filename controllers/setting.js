@@ -297,4 +297,21 @@ const uocRoomSeting = async (req, res) => {
   }
 };
 
-module.exports = { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildings, getRoomTypesByDormID, uocRoomTypes, getRoomSetingByDormID, uocRoomSeting, };
+const getBuildingsWithFloor = async (req, res) => {
+  const { dormID } = req.params;
+
+  await buildingModel.findAll({
+    attributes: ['BUILDINGID', 'BUILDINGNAME', 'NUMOFFLOOR'],
+    where: {
+      DORMID: dormID
+    }
+  })
+    .then((data) => {
+      return res.status(200).send(data);
+    })
+    .catch((err) => {
+      return res.status(400).send(err.message);
+    });
+};
+
+module.exports = { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildings, getRoomTypesByDormID, uocRoomTypes, getRoomSetingByDormID, uocRoomSeting, getBuildingsWithFloor };

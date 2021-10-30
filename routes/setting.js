@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildings, getRoomTypesByDormID, uocRoomTypes, getRoomSetingByDormID, uocRoomSeting } = require('../controllers/setting')
+const { getCostSettingByDormID, uocCostSetting, getBuildingsByDormID, uocBuildings, getRoomTypesByDormID, uocRoomTypes, getRoomSetingByDormID, uocRoomSeting, getBuildingsWithFloor } = require('../controllers/setting')
 
 // Get old cost setting detail
 router.get('/getCost/:dormID', getCostSettingByDormID);
@@ -25,5 +25,8 @@ router.get('/getRooms/:dormID', getRoomSetingByDormID);
 
 // UoC room setting
 router.post('/setRooms/:dormID', uocRoomSeting);
+
+// Get buildings with number of floor
+router.get('/getDropdownBuildings/:dormID', getBuildingsWithFloor);
 
 module.exports = router;
