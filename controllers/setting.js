@@ -21,7 +21,8 @@ const getOldCostSettingDetail = async (settingID) => {
       'PARKINGFEE',
       'INTERNETFEE',
       'CLEANINGFEE',
-      'OTHER'
+      'OTHER',
+      'INVOICEDATE'
     ],
     where: {
       SETTINGID: settingID
@@ -67,7 +68,7 @@ const getCostSettingByDormID = async (req, res) => {
 
 const uocCostSetting = async (req, res) => {
   const { dormID } = req.params;
-  const { waterPrice, electricityPrice, minWaterUnit, minWaterPrice, guaranteeFee, multPrePaid, maintenanceFee, parkingFee, internetFee, cleaningFee, other, } = req.body;
+  const { waterPrice, electricityPrice, minWaterUnit, minWaterPrice, guaranteeFee, multPrePaid, maintenanceFee, parkingFee, internetFee, cleaningFee, invoiceDate, other } = req.body;
 
   const isSetting = await settingModel.findOne({
     attributes: ['SETTINGID'],
@@ -90,6 +91,7 @@ const uocCostSetting = async (req, res) => {
       INTERNETFEE: internetFee ? internetFee : 0,
       CLEANINGFEE: cleaningFee ? cleaningFee : 0,
       OTHER: other ? other : 0,
+      INVOICEDATE: invoiceDate ? invoiceDate : 28,
       DORMID: dormID
     };
 
