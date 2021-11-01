@@ -9,6 +9,16 @@ const listOfCostQuery = require('../queries/listOfCost');
 const roomQuery = require('../queries/room');
 const unitUsedQuery = require('../queries/unitUsed');
 
+const getSettingInvoiceDate = async (dormID) => {
+    const { INVOICEDATE: invoiceDate } = await settingModel.findOne({
+        attributes: ['INVOICEDATE'],
+        where: {
+            DORMID: dormID
+        }
+    });
+    return invoiceDate;
+};
+
 const getDormSetting = async (dormID) => {
     const setting = await settingModel.findOne({
         where: {
@@ -141,27 +151,63 @@ const createInvoice = async (req, res) => {
 const getAdminInvoiceList = async (req, res) => {
     const { dormID } = req.params;
 
-    const invoiceList = await db.query(
+    await db.query(
         invoiceQuery.getAdminInvoiceList,
         {
             replacements: [dormID],
             type: db.QueryTypes.SELECT
         }
-    );
-    return res.status(200).send(invoiceList);
+    )
+        .then((data) => {
+            return res.status(200).send(data);
+        })
+        .catch((err) => {
+            return res.status(400).send(err.message);
+        });
 };
 
 const getResidentInvoiceList = async (req, res) => {
-    const { rentID } = req.params;
+    const { rentID, dormID } = req.params;
 
-    const invoiceList = await db.query(
+    const todayDate = new Date().toISOString().slice(0, 10);
+    const day = await getSettingInvoiceDate(dormID);
+    const settingDate = String(todayDate.slice(0, 8) + day);
+    const thisBillingCycle = todayDate.slice(0, 7);
+    const thisBillingYear = thisBillingCycle.slice(0, 4);
+    const thisBillingMonth = thisBillingCycle.slice(5, 7);
+    let billingCycle;
+    let previousBillingCycle;
+
+    if (thisBillingMonth == 1) {
+        let year = Number(thisBillingYear) - 1
+        let month = 12
+        previousBillingCycle = year + '-' + month
+    } else {
+        let year = thisBillingYear
+        let month = Number(thisBillingMonth) - 1
+        if (month < 10) { month = '0' + month }
+        previousBillingCycle = year + '-' + month
+    }
+
+    if (todayDate <= settingDate) {
+        billingCycle = settingDate.slice(0, 7);
+    } else {
+        billingCycle = previousBillingCycle
+    }
+
+    await db.query(
         invoiceQuery.getResidentInvoiceList,
         {
-            replacements: [rentID],
+            replacements: { rentID: rentID, billingCycle: billingCycle },
             type: db.QueryTypes.SELECT
         }
-    );
-    return res.status(200).send(invoiceList);
+    )
+        .then((data) => {
+            return res.status(200).send(data);
+        })
+        .catch((err) => {
+            return res.status(400).send(err.message);
+        });
 };
 
 const getInvoiceDetail = async (req, res) => {

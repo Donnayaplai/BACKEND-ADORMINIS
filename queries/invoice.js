@@ -12,7 +12,7 @@ const getAdminInvoiceList = `
     JOIN INVOICE i 
     ON r.ROOMID = i.ROOMID 
     WHERE d.DORMID = ?
-    ORDER BY 4 DESC , r.FLOOR , r.ROOMNO;
+    ORDER BY 5 DESC , r.FLOOR , r.ROOMNO;
 `
 // Invoice controller
 const getResidentInvoiceList = `
@@ -25,7 +25,8 @@ const getResidentInvoiceList = `
     ON i.ROOMID = r.ROOMID
     JOIN RENT r2 
     ON r.ROOMID  = r2.ROOMID 
-    WHERE r2.RENTID = ?
+    WHERE r2.RENTID = :rentID
+    AND SUBSTRING(i.INVOICEDATE,1,7) <= :billingCycle
     ORDER BY 3 DESC;
 `
 // Invoice controller
