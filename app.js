@@ -54,6 +54,10 @@ app.use('/invoice', invoiceRouter);
 const problemRouter = require('./routes/problem');
 app.use('/complaint', problemRouter);
 
+// Dashboard
+const dashboardRouter = require('./routes/dashboard');
+app.use('/dashboard', dashboardRouter);
+
 // Test data formats
 app.use('/testja', (req, res) => {
   const { roomTypes } = req.body;
