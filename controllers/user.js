@@ -192,4 +192,54 @@ const getUserInfo = async (req, res) => {
   return res.status(200).send(info.dataValues);
 };
 
-module.exports = { verifyUser, residentRegister, adminRegister, userLogin, getUserDetail, getUserInfo };
+const editUser = async (req, res) => {
+  const { userID } = req.params;
+  const { fName, lName, telNo, gender, idCardNo, dateOfBirth } = req.body;
+
+  if (fName != "") {
+    await userModel.update({ FNAME: fName }, {
+      where: {
+        USERID: userID
+      }
+    });
+  }
+  if (lName != "") {
+    await userModel.update({ LNAME: lName }, {
+      where: {
+        USERID: userID
+      }
+    });
+  }
+  if (telNo != "") {
+    await userModel.update({ TELNO: telNo }, {
+      where: {
+        USERID: userID
+      }
+    });
+  }
+  if (gender != "") {
+    await userModel.update({ GENDER: gender }, {
+      where: {
+        USERID: userID
+      }
+    });
+  }
+  if (idCardNo != "") {
+    await userModel.update({ IDCARDNO: idCardNo }, {
+      where: {
+        USERID: userID
+      }
+    });
+  }
+  if (dateOfBirth != "") {
+    await userModel.update({ DATEOFBIRTH: dateOfBirth }, {
+      where: {
+        USERID: userID
+      }
+    });
+  }
+
+  return res.status(200).send(String("Information has been updated to user ID " + userID));
+};
+
+module.exports = { verifyUser, residentRegister, adminRegister, userLogin, getUserDetail, getUserInfo, editUser };
