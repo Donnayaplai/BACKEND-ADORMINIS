@@ -16,5 +16,12 @@ const getAdminComplaintList = `
     WHERE d.DORMID = ?
     ORDER BY p.INFORMEDDATE DESC , p.PROBLEMID DESC;
 `
+// Dashboard controller
+const countComplaint = `
+    SELECT COUNT(*) AS "complaint"
+    FROM PROBLEM
+    WHERE DORMID = ?
+    AND STATUS = 0;
+`
 
-module.exports = { getResidentComplaintList, getAdminComplaintList };
+module.exports = { getResidentComplaintList, getAdminComplaintList, countComplaint };

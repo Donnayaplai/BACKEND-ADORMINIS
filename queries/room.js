@@ -38,5 +38,50 @@ const getListOfRoomInSetting = `
     ON r.ROOMTYPEID = rt.ROOMTYPEID 
     WHERE b.DORMID = ? ;
 `
+// Dashboard controller
+const countAllRoom = `
+    SELECT COUNT(r.ROOMID) AS "room"
+    FROM ROOM r 
+    JOIN BUILDING b 
+    ON r.BUILDINGID = b.BUILDINGID 
+    JOIN DORMITORY d 
+    ON b.DORMID = d.DORMID 
+    WHERE d.DORMID = ? ;
+`
+// Dashboard controller
+const countAvailableRoom = `
+    SELECT COUNT(r.ROOMID) AS "availableRoom"
+    FROM ROOM r 
+    JOIN BUILDING b 
+    ON r.BUILDINGID = b.BUILDINGID 
+    JOIN DORMITORY d 
+    ON b.DORMID = d.DORMID 
+    WHERE d.DORMID = ?
+    AND r.STATUS = 1;
+`
+// Dashboard controller
+const countNotAvailableRoom = `
+    SELECT COUNT(r.ROOMID) AS "notAvailableRoom"
+    FROM ROOM r 
+    JOIN BUILDING b 
+    ON r.BUILDINGID = b.BUILDINGID 
+    JOIN DORMITORY d 
+    ON b.DORMID = d.DORMID 
+    WHERE d.DORMID = ?
+    AND r.STATUS = 0;
+`
+// Dashboard controller
+const countResident = `
+    SELECT COUNT(r.RENTID) AS "resident"
+    FROM RENT r 
+    JOIN ROOM r2 
+    ON r.ROOMID = r2.ROOMID 
+    JOIN BUILDING b 
+    ON r2.BUILDINGID = b.BUILDINGID 
+    JOIN DORMITORY d 
+    ON b.DORMID = d.DORMID 
+    WHERE d.DORMID = ?
+    AND r.CHECKOUTDATE IS NULL;
+`
 
-module.exports = { getRoomListByBuildingID, getRoomPrice, getListOfNotAvailableRoom, getListOfRoomInSetting };
+module.exports = { getRoomListByBuildingID, getRoomPrice, getListOfNotAvailableRoom, getListOfRoomInSetting, countAllRoom, countAvailableRoom, countNotAvailableRoom, countResident };
