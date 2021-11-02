@@ -236,7 +236,7 @@ const editResidentInfo = async (req, res) => {
     ADDRESS: address ? address : oldAddress
   };
 
-  if (fName.trim() != "" || lName.trim() != "" || telNo.trim() != "" || gender.trim() != "" || idCardNo.trim() != "" || dateOfBirth.trim() != "" || address.trim() != "") {
+  if (fName != "" || lName != "" || telNo != "" || gender != "" || idCardNo != "" || dateOfBirth != "" || address != "") {
     await userModel.update(userData, {
       where: {
         USERID: userID
@@ -244,7 +244,7 @@ const editResidentInfo = async (req, res) => {
     });
   }
 
-  if (startDate.trim() != "" || endDate.trim() != "") {
+  if (startDate != "" || endDate != "") {
     await CoRModel.update(({
       STARTDATE: startDate ? startDate : oldStartDate,
       ENDDATE: endDate ? endDate : oldEndDate
@@ -255,7 +255,7 @@ const editResidentInfo = async (req, res) => {
     });
   }
 
-  if (checkInDate.trim() != "") {
+  if (checkInDate != "") {
     await rentModel.update({ CHECKINDATE: checkInDate ? checkInDate : oldCheckInDate }, {
       where: {
         RENTID: rentID
