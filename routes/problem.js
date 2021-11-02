@@ -3,7 +3,7 @@ const router = express.Router();
 const { sendComplaint, getComplaintDetail, getResidentComplaintList, getAdminComplaintList, removeComplaint, reviseComplaint } = require('../controllers/problem');
 
 // Send the complaint to admin
-router.post('/send/:userID/:dormID', sendComplaint);
+router.post('/send/:rentID/:dormID', sendComplaint);
 
 // Get complaint detail for both sides
 router.get('/:problemID', getComplaintDetail);

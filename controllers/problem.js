@@ -4,11 +4,11 @@ const rentModel = require('../models/rent');
 const roomModel = require('../models/room');
 const problemQuery = require('../queries/problem');
 
-const getRoomNoByUserId = async (userID) => {
+const getRoomNoByRentId = async (rentID) => {
     const { ROOMID: roomId } = await rentModel.findOne({
         attributes: ['ROOMID'],
         where: {
-            USERID: userID
+            RENTID: rentID
         }
     });
 
@@ -23,7 +23,7 @@ const getRoomNoByUserId = async (userID) => {
 };
 
 const sendComplaint = async (req, res) => {
-    const { userID, dormID } = req.params;
+    const { rentID, dormID } = req.params;
     const { title, detail } = req.body;
 
     const todayDate = new Date().toISOString().slice(0, 10);
@@ -32,7 +32,7 @@ const sendComplaint = async (req, res) => {
         TITLE: title,
         DETAIL: detail,
         INFORMEDDATE: todayDate,
-        USERID: userID,
+        RENTID: rentID,
         DORMID: dormID
     };
 
@@ -48,7 +48,7 @@ const sendComplaint = async (req, res) => {
 const getComplaintDetail = async (req, res) => {
     const { problemID } = req.params;
 
-    const { TITLE: title, DETAIL: detail, INFORMEDDATE: informDate, REVISIONDATE: revisionDate, STATUS: status, USERID: userID } = await problemModel.findOne({
+    const { TITLE: title, DETAIL: detail, INFORMEDDATE: informDate, REVISIONDATE: revisionDate, STATUS: status, RENTID: rentID } = await problemModel.findOne({
         where: {
             PROBLEMID: problemID
         }
@@ -56,7 +56,7 @@ const getComplaintDetail = async (req, res) => {
 
     const complaintDetail = {
         problemID: problemID,
-        roomNo: await getRoomNoByUserId(userID),
+        roomNo: await getRoomNoByRentId(rentID),
         title: title,
         detail: detail,
         informDate: informDate,
@@ -88,19 +88,29 @@ const getResidentComplaintList = async (req, res) => {
 const getAdminComplaintList = async (req, res) => {
     const { dormID } = req.params;
 
-    await db.query(
+    const complaintList = await db.query(
         problemQuery.getAdminComplaintList,
         {
             replacements: [dormID],
             type: db.QueryTypes.SELECT,
         }
-    )
-        .then((data) => {
-            return res.status(200).send(data);
-        })
-        .catch((err) => {
-            return res.status(400).send(err.message);
+    );
+
+    let adminComplaintList = [];
+
+    complaintList.forEach(async (cl) => {
+        adminComplaintList.push({
+            PROBLEMID: cl.PROBLEMID,
+            ROOMNO: await getRoomNoByRentId(cl.RENTID),
+            TITLE: cl.TITLE,
+            INFORMEDDATE: cl.INFORMEDDATE,
+            STATUS: cl.STATUS
         });
+
+        if (adminComplaintList.length == complaintList.length) {
+            return res.status(200).send(adminComplaintList);
+        }
+    });
 };
 
 const removeComplaint = async (req, res) => {

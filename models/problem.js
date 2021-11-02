@@ -24,7 +24,7 @@ PROBLEM.init(
         STATUS: {
             type: DataTypes.BOOLEAN,
         },
-        USERID: {
+        RENTID: {
             type: DataTypes.INTEGER,
             primaryKey: true,
         },
