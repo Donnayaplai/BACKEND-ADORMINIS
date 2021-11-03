@@ -58,6 +58,10 @@ app.use('/complaint', problemRouter);
 const dashboardRouter = require('./routes/dashboard');
 app.use('/dashboard', dashboardRouter);
 
+// History
+const historyRouter = require('./routes/history');
+app.use('/history', historyRouter);
+
 // Test data formats
 app.use('/testja', (req, res) => {
   const { roomTypes } = req.body;
