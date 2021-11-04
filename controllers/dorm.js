@@ -37,8 +37,8 @@ const getDormInfo = async (req, res) => {
     .then((data) => {
       return res.status(200).send(data);
     })
-    .catch((err) => {
-      return res.status(400).send(err.message);
+    .catch(() => {
+      return res.status(400).json({ message: "มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง" });
     });
 };
 
@@ -66,8 +66,8 @@ const updateDormInfo = async (req, res) => {
     .then((data) => {
       return res.status(200).send(data);
     })
-    .catch((err) => {
-      return res.status(400).send(err.message);
+    .catch(() => {
+      return res.status(400).json({ message: "มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง" });
     });
 };
 

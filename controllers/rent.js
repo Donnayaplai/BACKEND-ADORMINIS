@@ -198,7 +198,7 @@ const addUserToRoom = async (req, res) => {
 
     return res.status(200).send(String("Resident has been added to room ID " + roomID));
   } else {
-    return res.status(400).send("User already in room");
+    return res.status(400).json({ message: "ผู้ใช้มีห้องพักอยู่แล้ว" });
   }
 };
 
@@ -296,4 +296,4 @@ const removeUser = async (req, res) => {
   return res.status(200).send(String("User has been removed from room ID " + roomID));
 };
 
-module.exports = { checkRoomStatus, addUserToRoom, editResidentInfo, removeUser, };
+module.exports = { checkRoomStatus, addUserToRoom, editResidentInfo, removeUser };

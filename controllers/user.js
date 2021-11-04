@@ -27,10 +27,10 @@ const verifyUser = async (req, res) => {
     if (dateOfBirth === dbDateOfBirth) {
       return res.status(200).send(userId);
     } else {
-      return res.status(400).json({ message: 'กรุณาระบุวันเกิดให้ถูกต้อง' });
+      return res.status(400).json({ message: "กรุณาระบุวันเกิดให้ถูกต้อง" });
     }
   } else {
-    return res.status(400).json({ message: 'ไม่พบผู้ใช้ดังกล่าวในระบบ' });
+    return res.status(400).json({ message: "ไม่พบผู้ใช้ดังกล่าวในระบบ" });
   }
 };
 
@@ -49,7 +49,7 @@ const residentRegister = async (req, res) => {
     if (user) {
       return res
         .status(400)
-        .json({ message: 'อีเมลนี้ถูกใช้งานแล้ว กรุณาลองอีกครั้ง' });
+        .json({ message: "อีเมลนี้ถูกใช้งานแล้ว กรุณาลองอีกครั้ง" });
     } else {
       // Encrypt password
       const salt = await bcrypt.genSalt(10);
@@ -66,12 +66,12 @@ const residentRegister = async (req, res) => {
           },
         }
       );
-      return res.status(200).send('User registered');
+      return res.status(200).send("User registered");
     }
   } catch (err) {
     return res
       .status(500)
-      .json({ message: 'มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง' });
+      .json({ message: "มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง" });
   }
 };
 
@@ -90,7 +90,7 @@ const adminRegister = async (req, res) => {
     if (user) {
       return res
         .status(400)
-        .json({ message: 'อีเมลนี้ถูกใช้งานแล้ว กรุณาลองอีกครั้ง' });
+        .json({ message: "อีเมลนี้ถูกใช้งานแล้ว กรุณาลองอีกครั้ง" });
     } else {
       // Encrypt password
       const salt = await bcrypt.genSalt(10);
@@ -107,12 +107,12 @@ const adminRegister = async (req, res) => {
         PASSWORD: password,
         ROLEID: 1, // Admin
       });
-      return res.status(200).send('User registered');
+      return res.status(200).send("User registered");
     }
   } catch (err) {
     return res
       .status(500)
-      .json({ message: 'มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง' });
+      .json({ message: "มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง" });
   }
 };
 
@@ -127,14 +127,14 @@ const userLogin = async (req, res) => {
     });
 
     if (!user) {
-      res.status(400).json({ message: 'ไม่พบผู้ใช้' });
+      res.status(400).json({ message: "ไม่พบผู้ใช้" });
     }
 
     const dbPassword = user.PASSWORD;
 
     bcrypt.compare(password, dbPassword).then(async (match) => {
       if (!match) {
-        res.status(400).json({ message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
+        res.status(400).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
       } else {
         // Return jsonwebtoken
         const payload = await userModel.findOne({
@@ -155,7 +155,7 @@ const userLogin = async (req, res) => {
   } catch (err) {
     return res
       .status(500)
-      .json({ message: 'มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง' });
+      .json({ message: "มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง" });
   }
 };
 
@@ -164,7 +164,7 @@ const getUserDetail = async (req, res) => {
 
   jwt.verify(authorization, process.env.AUTH_KEY, async (err, userDetail) => {
     if (err) {
-      return res.status(400).send(err.message);
+      return res.status(400).json({ message: "มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง" });
     } else {
       if (userDetail.ROLEID == 0) {
         const user = await db.query(userQuery.getResidentDetail, {
@@ -273,7 +273,7 @@ const editUser = async (req, res) => {
 
   return res
     .status(200)
-    .send(String('Information has been updated to user ID ' + userID));
+    .send(String("Information has been updated to user ID " + userID));
 };
 
 module.exports = {
@@ -283,5 +283,5 @@ module.exports = {
   userLogin,
   getUserDetail,
   getUserInfo,
-  editUser,
+  editUser
 };
