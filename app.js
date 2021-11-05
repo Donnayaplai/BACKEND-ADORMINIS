@@ -64,9 +64,9 @@ app.use('/history', historyRouter);
 
 // Test data formats
 app.use('/testja', (req, res) => {
-  const { roomTypes } = req.body;
+  const { arrayRoomTypes } = req.body;
 
-  console.log(roomTypes);
+  console.log(arrayRoomTypes);
 });
 
 app.get('/', (req, res) => {
