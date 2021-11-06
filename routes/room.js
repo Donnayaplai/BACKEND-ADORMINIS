@@ -1,13 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const { checkRoomStatus, addUserToRoom, editResidentInfo, removeUser } = require('../controllers/rent');
-const { getAllRoomByBuildingID, getRoomInfo, editCost } = require('../controllers/room');
+const {
+  checkRoomStatus,
+  addUserToRoom,
+  editResidentInfo,
+  removeUser,
+} = require('../controllers/rent');
+const {
+  getAllRoomByBuildingID,
+  getRoomInfo,
+  editCost,
+} = require('../controllers/room');
 
 // Check room status before add user to room
 router.get('/status/:roomID', checkRoomStatus);
 
 // Add resident to specific room
-router.post('add/:buildingID/:roomID', addUserToRoom);
+router.post('/add/:buildingID/:roomID', addUserToRoom);
 
 // Edit resident info in roomTable page
 router.post('/edit/:rentID', editResidentInfo);
