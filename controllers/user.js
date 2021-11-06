@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/dbConnection');
+const manageModel = require('../models/manage');
 const userModel = require('../models/user');
 const userQuery = require('../queries/user');
 
@@ -276,6 +277,22 @@ const editUser = async (req, res) => {
     .send(String("Information has been updated to user ID " + userID));
 };
 
+const isFirstLogin = async (req, res) => {
+  const { userID } = req.params;
+
+  const manage = await manageModel.findOne({
+    where: {
+      USERID: userID
+    }
+  });
+
+  if (manage) {
+    return res.status(200).send(true);
+  } else {
+    return res.status(200).send(false);
+  }
+};
+
 module.exports = {
   verifyUser,
   residentRegister,
@@ -283,5 +300,6 @@ module.exports = {
   userLogin,
   getUserDetail,
   getUserInfo,
-  editUser
+  editUser,
+  isFirstLogin
 };
