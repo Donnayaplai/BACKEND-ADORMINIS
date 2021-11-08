@@ -91,7 +91,7 @@ const uocCostSetting = async (req, res) => {
       INTERNETFEE: internetFee ? internetFee : 0,
       CLEANINGFEE: cleaningFee ? cleaningFee : 0,
       OTHER: other ? other : 0,
-      INVOICEDATE: invoiceDate ? invoiceDate : 28,
+      INVOICEDATE: invoiceDate ? invoiceDate : 1,
       DORMID: dormID
     };
 
@@ -119,7 +119,8 @@ const uocCostSetting = async (req, res) => {
       PARKINGFEE: parkingFee ? parkingFee : oldCostSettingDetail.PARKINGFEE,
       INTERNETFEE: internetFee ? internetFee : oldCostSettingDetail.INTERNETFEE,
       CLEANINGFEE: cleaningFee ? cleaningFee : oldCostSettingDetail.CLEANINGFEE,
-      OTHER: other ? other : oldCostSettingDetail.OTHER
+      OTHER: other ? other : oldCostSettingDetail.OTHER,
+      INVOICEDATE: invoiceDate ? invoiceDate : oldCostSettingDetail.INVOICEDATE,
     };
 
     await settingModel.update(costDetail, {
