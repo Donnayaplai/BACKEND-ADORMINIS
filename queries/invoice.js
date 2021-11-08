@@ -12,6 +12,7 @@ const getAdminInvoiceList = `
     JOIN INVOICE i 
     ON r.ROOMID = i.ROOMID 
     WHERE d.DORMID = ?
+    AND i.TOTALPRICE IS NOT NULL
     ORDER BY 5 DESC , r.FLOOR , r.ROOMNO;
 `
 // Invoice controller
@@ -26,7 +27,8 @@ const getResidentInvoiceList = `
     JOIN RENT r2 
     ON r.ROOMID  = r2.ROOMID 
     WHERE r2.RENTID = :rentID
-    AND SUBSTRING(i.INVOICEDATE,1,7) <= :billingCycle
+    AND i.VIEWDATE <= :todayDate
+    AND i.TOTALPRICE IS NOT NULL
     ORDER BY 3 DESC;
 `
 // Invoice controller

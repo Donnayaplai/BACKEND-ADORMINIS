@@ -9,7 +9,7 @@ router.post('/create/:dormID', createInvoice);
 router.get('/list/:dormID', getAdminInvoiceList);
 
 // Get resident history invoice list
-router.get('/history/:rentID/:dormID', getResidentInvoiceList);
+router.get('/history/:rentID', getResidentInvoiceList);
 
 // Get all invoice detail
 router.get('/:invoiceID/:dormID', getInvoiceDetail);
