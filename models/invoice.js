@@ -15,8 +15,8 @@ INVOICE.init(
         INVOICEDATE: {
             type: DataTypes.DATE,
         },
-        DUEDATE: {
-            type: DataTypes.DECIMAL,
+        VIEWDATE: {
+            type: DataTypes.DATE,
         },
         ROOMID: {
             type: DataTypes.INTEGER,
