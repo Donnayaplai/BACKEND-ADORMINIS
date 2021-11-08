@@ -289,7 +289,7 @@ const isFirstLogin = async (req, res) => {
   if (manage) {
     return res.status(200).send(true);
   } else {
-    return res.status(200).send(false);
+    return res.status(200).send(false); // First time
   }
 };
 
