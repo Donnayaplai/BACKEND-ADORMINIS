@@ -10,22 +10,24 @@ const waterMeterModel = require('../models/waterMeter');
 const meterQuery = require('../queries/meter');
 const roomQuery = require('../queries/room');
 
-const getOldElectricMeterNo = async (roomID, previousBillingCycle) => {
+const todayDate = new Date().toISOString().slice(0, 10);
+
+const getOldElectricMeterNo = async (roomID, thisBillingCycle) => {
   const electricMeterNo = await db.query(
     meterQuery.getOldElectricMeterNo,
     {
-      replacements: { roomID: roomID, previousBillingCycle: previousBillingCycle + '%' },
+      replacements: { roomID: roomID, thisBillingCycle: thisBillingCycle + '%', todayDate: todayDate },
       type: db.QueryTypes.SELECT
     }
   );
   return electricMeterNo[0].ELECTRICITYNO;
 };
 
-const getOldWaterMeterNo = async (roomID, previousBillingCycle) => {
+const getOldWaterMeterNo = async (roomID, thisBillingCycle) => {
   const waterMeterNo = await db.query(
     meterQuery.getOldWaterMeterNo,
     {
-      replacements: { roomID: roomID, previousBillingCycle: previousBillingCycle + '%' },
+      replacements: { roomID: roomID, thisBillingCycle: thisBillingCycle + '%', todayDate: todayDate },
       type: db.QueryTypes.SELECT
     }
   );
@@ -113,20 +115,6 @@ const getOldMeterNo = async (req, res) => {
   const { buildingID } = req.params;
 
   const thisBillingCycle = new Date().toISOString().slice(0, 7);
-  const thisBillingYear = thisBillingCycle.slice(0, 4);
-  const thisBillingMonth = thisBillingCycle.slice(5, 7);
-  let previousBillingCycle = '';
-
-  if (thisBillingMonth == 1) {
-    let year = Number(thisBillingYear) - 1
-    let month = 12
-    previousBillingCycle = year + '-' + month
-  } else {
-    let year = thisBillingYear
-    let month = Number(thisBillingMonth) - 1
-    if (month < 10) { month = '0' + month }
-    previousBillingCycle = year + '-' + month
-  }
 
   const roomList = await db.query(
     roomQuery.getRoomListByBuildingID,
@@ -146,8 +134,8 @@ const getOldMeterNo = async (req, res) => {
       roomNo: rl.ROOMNO,
       floor: rl.FLOOR,
       status: rl.STATUS,
-      oldElectricMeterNo: await getOldElectricMeterNo(rl.ROOMID, previousBillingCycle),
-      oldWaterMeterNo: await getOldWaterMeterNo(rl.ROOMID, previousBillingCycle)
+      oldElectricMeterNo: await getOldElectricMeterNo(rl.ROOMID, thisBillingCycle),
+      oldWaterMeterNo: await getOldWaterMeterNo(rl.ROOMID, thisBillingCycle)
     });
 
     if (arrayRoomWithMeter.length == roomList.length) {
@@ -164,11 +152,12 @@ const calculateAndSummary = async (req, res) => {
   const waterPricePerUnit = await getWaterPricePerUnit(dormID);
   const minWaterUnit = await getMinWaterUnit(dormID);
   const minWaterPrice = await getMinWaterPrice(dormID);
-  const todayDate = new Date().toISOString().slice(0, 10);
   const thisBillingYear = todayDate.slice(0, 4);
   const thisBillingMonth = todayDate.slice(5, 7);
   const thisBillingCycle = todayDate.slice(0, 7);
   let previousBillingCycle = '';
+  let nextBillingCycle = '';
+  let viewDate;
 
   if (thisBillingMonth == 1) {
     let year = Number(thisBillingYear) - 1
@@ -179,6 +168,34 @@ const calculateAndSummary = async (req, res) => {
     let month = Number(thisBillingMonth) - 1
     if (month < 10) { month = '0' + month }
     previousBillingCycle = year + '-' + month
+  }
+
+  if (thisBillingMonth == 12) {
+    let year = Number(thisBillingYear) + 1
+    let month = 1
+    nextBillingCycle = year + '-' + month
+  } else {
+    let year = thisBillingYear
+    let month = Number(thisBillingMonth) + 1
+    if (month < 10) { month = '0' + month }
+    nextBillingCycle = year + '-' + month
+  }
+
+  let { INVOICEDATE: settingInvoiceDay } = await settingModel.findOne({
+    attributes: ['INVOICEDATE'],
+    where: {
+      DORMID: dormID
+    }
+  });
+
+  if (settingInvoiceDay < 10) {
+    settingInvoiceDay = String('0' + settingInvoiceDay)
+  }
+
+  if (Number(todayDate.slice(8, 10)) > Number(settingInvoiceDay)) {
+    viewDate = String(nextBillingCycle + '-' + settingInvoiceDay)
+  } else {
+    viewDate = String(thisBillingCycle + '-' + settingInvoiceDay)
   }
 
   let summary = [];
@@ -254,8 +271,9 @@ const calculateAndSummary = async (req, res) => {
 
     let electricPrice = Number((electricUnit * electricPricePerUnit).toFixed(2));
     let waterPrice = 0;
+
     if (waterUnit > minWaterUnit) {
-      waterPrice = Number(((waterUnit - minWaterUnit) * waterPricePerUnit + minWaterPrice).toFixed(2));
+      waterPrice = Number((((waterUnit - minWaterUnit) * waterPricePerUnit) + minWaterPrice).toFixed(2));
 
     } else {
       waterPrice = minWaterPrice;
@@ -334,7 +352,11 @@ const calculateAndSummary = async (req, res) => {
           });
       }
 
-      await invoiceModel.update({ TOTALPRICE: await sumPrice(invoiceID) },
+      await invoiceModel.update({
+        TOTALPRICE: await sumPrice(invoiceID),
+        INVOICEDATE: todayDate,
+        VIEWDATE: viewDate
+      },
         {
           where: {
             INVOICEID: invoiceID
