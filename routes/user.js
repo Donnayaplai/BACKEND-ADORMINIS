@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { getResidentInfo } = require('../controllers/residentInfo');
+const { getResidentInfo, getResidentRoomDorm } = require('../controllers/residentInfo');
 const { verifyUser, residentRegister, adminRegister, userLogin, getUserDetail, getUserInfo, editUser, isFirstLogin } = require('../controllers/user');
 
 // Get resident info in roomTable page
 router.get('/resident/:roomID', getResidentInfo);
+
+// Get dorm, room and rent info
+router.get('/rent/:rentID', getResidentRoomDorm);
 
 // Check id card and date of birth before register (resident side)
 router.post('/verifyUser', verifyUser);
