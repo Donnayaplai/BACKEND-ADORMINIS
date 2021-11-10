@@ -257,6 +257,8 @@ const uocRoomSeting = async (req, res) => {
   const { dormID } = req.params;
   const { buildingName, floor, arrayRoom } = req.body;
 
+  const todayDate = new Date().toISOString().slice(0, 10);
+
   for (let i = 0; i < arrayRoom.length; i++) {
     const room = {
       ROOMID: arrayRoom[i].ROOMID ? arrayRoom[i].ROOMID : null,
@@ -281,9 +283,9 @@ const uocRoomSeting = async (req, res) => {
 
       await listOfCostModel.create({ ROOMID: roomInsertId });
 
-      await electricMeterModel.create({ ROOMID: roomInsertId });
+      await electricMeterModel.create({ ROOMID: roomInsertId, METERDATE: todayDate });
 
-      await waterMeterModel.create({ ROOMID: roomInsertId });
+      await waterMeterModel.create({ ROOMID: roomInsertId, METERDATE: todayDate });
 
     } else {
 
