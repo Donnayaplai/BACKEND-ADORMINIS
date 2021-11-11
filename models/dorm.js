@@ -15,9 +15,6 @@ DORMITORY.init(
     DORMNAMEENG: {
       type: DataTypes.STRING,
     },
-    NUMOFBUILDING: {
-      type: DataTypes.INTEGER,
-    },
     ADDRESS: {
       type: DataTypes.STRING,
     },
@@ -37,9 +34,6 @@ DORMITORY.init(
       type: DataTypes.STRING,
     },
     DISTRICT: {
-      type: DataTypes.STRING,
-    },
-    DORMCODE: {
       type: DataTypes.STRING,
     },
   },
