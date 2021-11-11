@@ -38,9 +38,6 @@ USER.init(
     PASSWORD: {
       type: DataTypes.STRING,
     },
-    PERSONALCODE: {
-      type: DataTypes.STRING,
-    },
     ROLEID: {
       type: DataTypes.INTEGER,
     },
