@@ -148,7 +148,7 @@ const userLogin = async (req, res) => {
 
         const data = {
           TOKEN: token,
-          ROLEID: payload.dataValues.USERID,
+          USERID: payload.dataValues.USERID,
           ROLEID: payload.dataValues.ROLEID,
         };
         return res.status(200).send(data);
