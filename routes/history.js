@@ -3,6 +3,6 @@ const router = express.Router();
 const { getHistory } = require('../controllers/history');
 
 // History
-router.get('/:dormID', getHistory);
+router.get('/:dormID/:input', getHistory);
 
 module.exports = router;
