@@ -16,7 +16,7 @@ const getResidentInfo = `
 `
 // User controller
 const getResidentDetail = `
-    SELECT  u.USERID, u.FNAME, u.LNAME, u.EMAIL, u.ROLEID, r.RENTID, r2.ROOMID, r2.ROOMNO, d.DORMID, d.DORMNAMETH 
+    SELECT  u.USERID, r.RENTID, r2.ROOMID, r2.ROOMNO, d.DORMID, d.DORMNAMETH 
     FROM USER u 
     JOIN RENT r 
     ON u.USERID =r.USERID 
@@ -31,7 +31,7 @@ const getResidentDetail = `
 `
 // User controller
 const getAdminDetail = `
-    SELECT  u.USERID, u.FNAME, u.LNAME, u.EMAIL,  u.ROLEID, d.DORMID, d.DORMNAMETH 
+    SELECT  u.USERID, d.DORMID, d.DORMNAMETH 
     FROM USER u 
     JOIN MANAGE m 
     ON u.USERID = m.USERID 
