@@ -84,6 +84,17 @@ const getRoomNoByRoomId = async (roomID) => {
   return roomNo;
 };
 
+const getUnitUsedId = async (roomID, thisBillingCycle) => {
+  const unitUsedId = await unitUsedModel.findOne({
+    attributes: ['UNITUSEDID'],
+    where: {
+      ROOMID: roomID,
+      UNITUSEDDATE: { [Op.startsWith]: thisBillingCycle }
+    }
+  });
+  return unitUsedId;
+};
+
 const getInvoiceId = async (roomID, thisBillingCycle) => {
   const { INVOICEID: invoiceId } = await invoiceModel.findOne({
     attributes: ['INVOICEID'],
@@ -114,7 +125,7 @@ const sumPrice = async (invoiceID) => {
 const getOldMeterNo = async (req, res) => {
   const { buildingID } = req.params;
 
-  const thisBillingCycle = new Date().toISOString().slice(0, 7);
+  const thisBillingCycle = todayDate.slice(0, 7);
 
   const roomList = await db.query(
     roomQuery.getRoomListByBuildingID,
@@ -208,105 +219,36 @@ const calculateAndSummary = async (req, res) => {
     let electricUnit = 0;
     let waterUnit = 0;
 
-    if (electricMeterNo < oldElectricMeterNo && waterMeterNo < oldWaterMeterNo) {
-      // Electric
-      electricMeterNo += 9999.9;
+    if (electricMeterNo < oldElectricMeterNo) {
+      if ((String(oldElectricMeterNo).split("."))[0].length == 4) {
+        electricMeterNo += 9999.0;
+      } else if ((String(oldElectricMeterNo).split("."))[0].length == 5) {
+        electricMeterNo += 99999.0;
+      }
       electricUnit = electricMeterNo - oldElectricMeterNo;
-      // Water
-      waterMeterNo += 9999.999;
-      waterUnit = waterMeterNo - oldWaterMeterNo;
 
-    } else if (electricMeterNo < oldElectricMeterNo && waterMeterNo > oldWaterMeterNo) {
-      // Electric
-      electricMeterNo += 9999.9;
+    } else if (electricMeterNo > oldElectricMeterNo) {
       electricUnit = electricMeterNo - oldElectricMeterNo;
-      // Water
-      waterUnit = waterMeterNo - oldWaterMeterNo;
 
-    } else if (electricMeterNo > oldElectricMeterNo && waterMeterNo < oldWaterMeterNo) {
-      // Electric
-      electricUnit = electricMeterNo - oldElectricMeterNo;
-      // Water
-      waterMeterNo += 9999.999;
-      waterUnit = waterMeterNo - oldWaterMeterNo;
-
-    } else if (electricMeterNo > oldElectricMeterNo && waterMeterNo > oldWaterMeterNo) {
-      // Electric
-      electricUnit = electricMeterNo - oldElectricMeterNo;
-      // Water
-      waterUnit = waterMeterNo - oldWaterMeterNo;
-
-    } else if (electricMeterNo < oldElectricMeterNo && waterMeterNo == oldWaterMeterNo) {
-      // Electric
-      electricMeterNo += 9999.9;
-      electricUnit = electricMeterNo - oldElectricMeterNo;
-      // Water
-      waterUnit = 0;
-
-    } else if (electricMeterNo > oldElectricMeterNo && waterMeterNo == oldWaterMeterNo) {
-      // Electric
-      electricUnit = electricMeterNo - oldElectricMeterNo;
-      // Water
-      waterUnit = 0;
-
-    } else if (electricMeterNo == oldElectricMeterNo && waterMeterNo < oldWaterMeterNo) {
-      // Electric
+    } else {
       electricUnit = 0;
-      // Water
-      waterMeterNo += 9999.999;
+    }
+
+    if (waterMeterNo < oldWaterMeterNo) {
+      waterMeterNo += 9999.000;
       waterUnit = waterMeterNo - oldWaterMeterNo;
 
-    } else if (electricMeterNo == oldElectricMeterNo && waterMeterNo > oldWaterMeterNo) {
-      // Electric
-      electricUnit = 0;
-      // Water
+    } else if (waterMeterNo > oldWaterMeterNo) {
       waterUnit = waterMeterNo - oldWaterMeterNo;
 
-    } else if (electricMeterNo == oldElectricMeterNo && waterMeterNo == oldWaterMeterNo) {
-      // Electric
-      electricUnit = 0;
-      // Water
+    } else {
       waterUnit = 0;
     }
 
     let electricPrice = Number((electricUnit * electricPricePerUnit).toFixed(2));
     let waterPrice = 0;
 
-    if (waterUnit > minWaterUnit) {
-      waterPrice = Number((((waterUnit - minWaterUnit) * waterPricePerUnit) + minWaterPrice).toFixed(2));
-
-    } else {
-      waterPrice = minWaterPrice;
-    }
-
-    const unitUsedData = {
-      WATERUNIT: Number(waterUnit.toFixed(3)),
-      ELECTRICIRYUNIT: Number(electricUnit.toFixed(1)),
-      UNITUSEDDATE: todayDate,
-      ROOMID: am.roomID
-    };
-
-    const electricMeterData = {
-      ELECTRICITYNO: Number(am.electricMeterNo),
-      METERDATE: todayDate,
-      ROOMID: am.roomID
-    };
-
-    const waterMeterData = {
-      WATERNO: Number(am.waterMeterNo),
-      METERDATE: todayDate,
-      ROOMID: am.roomID
-    };
-
-    const summaryData = {
-      roomNo: await getRoomNoByRoomId(am.roomID),
-      electricUnit: Number(electricUnit.toFixed(1)),
-      electricPrice: electricPrice,
-      waterUnit: Number(waterUnit.toFixed(3)),
-      waterPrice: waterPrice,
-      totalPrice: Number((electricPrice + waterPrice).toFixed(2))
-    };
-
+    // Check room status
     const isAvailable = await roomModel.findOne({
       where: {
         ROOMID: am.roomID,
@@ -314,62 +256,156 @@ const calculateAndSummary = async (req, res) => {
       }
     });
 
-    if (!isAvailable) {
+    // Set water price
+    if (waterUnit > minWaterUnit) {
+      waterPrice = Number((((waterUnit - minWaterUnit) * waterPricePerUnit) + minWaterPrice).toFixed(2));
 
-      const invoiceID = await getInvoiceId(am.roomID, thisBillingCycle);
-      const isElectricCost = await invoiceDetailModel.findOne({ where: { COSTID: 2, INVOICEID: invoiceID } });
-      const isWaterCost = await invoiceDetailModel.findOne({ where: { COSTID: 3, INVOICEID: invoiceID } });
+    } else {
 
-      if (!isElectricCost) {
-        await invoiceDetailModel.create({
-          PRICE: electricPrice,
-          COSTID: 2,
-          INVOICEID: invoiceID
-        });
+      if (waterUnit == 0 && isAvailable) {
+        waterPrice = 0;
+
       } else {
-        await invoiceDetailModel.update({ PRICE: electricPrice },
-          {
-            where: {
-              COSTID: 2,
-              INVOICEID: invoiceID
-            }
-          });
+        waterPrice = minWaterPrice;
       }
-
-      if (!isWaterCost) {
-        await invoiceDetailModel.create({
-          PRICE: waterPrice,
-          COSTID: 3,
-          INVOICEID: invoiceID
-        });
-      } else {
-        await invoiceDetailModel.update({ PRICE: waterPrice },
-          {
-            where: {
-              COSTID: 3,
-              INVOICEID: invoiceID
-            }
-          });
-      }
-
-      await invoiceModel.update({
-        TOTALPRICE: await sumPrice(invoiceID),
-        INVOICEDATE: todayDate,
-        VIEWDATE: viewDate
-      },
-        {
-          where: {
-            INVOICEID: invoiceID
-          }
-        });
-
     }
 
-    await unitUsedModel.create(unitUsedData);
+    // Set meter and unit only room used
+    if (am.electricMeterNo || am.waterMeterNo) {
 
-    await electricMeterModel.create(electricMeterData);
+      if (am.electricMeterNo) {
+        await electricMeterModel.create({
+          ELECTRICITYNO: Number(am.electricMeterNo),
+          METERDATE: todayDate,
+          ROOMID: am.roomID
+        });
+      }
 
-    await waterMeterModel.create(waterMeterData);
+      if (am.waterMeterNo) {
+        await waterMeterModel.create({
+          WATERNO: Number(am.waterMeterNo),
+          METERDATE: todayDate,
+          ROOMID: am.roomID
+        });
+      }
+
+      const unitUsedId = await getUnitUsedId(am.roomID, thisBillingCycle);
+
+      if (!unitUsedId) {
+        await unitUsedModel.create({
+          WATERUNIT: Number(waterUnit.toFixed(3)),
+          ELECTRICIRYUNIT: Number(electricUnit.toFixed(1)),
+          UNITUSEDDATE: todayDate,
+          ROOMID: am.roomID
+        });
+
+      } else {
+
+        if (am.electricMeterNo) {
+          await unitUsedModel.update({
+            ELECTRICIRYUNIT: Number(electricUnit.toFixed(1)),
+            UNITUSEDDATE: todayDate,
+          }, {
+            where: {
+              UNITUSEDID: unitUsedId.dataValues.UNITUSEDID
+            }
+          });
+        }
+
+        if (am.waterMeterNo) {
+          await unitUsedModel.update({
+            WATERUNIT: Number(waterUnit.toFixed(3)),
+            UNITUSEDDATE: todayDate,
+          }, {
+            where: {
+              UNITUSEDID: unitUsedId.dataValues.UNITUSEDID
+            }
+          });
+        }
+      }
+
+      // Set price in invoice only not available room
+      if (!isAvailable) {
+
+        const invoiceID = await getInvoiceId(am.roomID, thisBillingCycle);
+        const isElectricCost = await invoiceDetailModel.findOne({ where: { COSTID: 2, INVOICEID: invoiceID } });
+        const isWaterCost = await invoiceDetailModel.findOne({ where: { COSTID: 3, INVOICEID: invoiceID } });
+
+        if (!isElectricCost) {
+          await invoiceDetailModel.create({
+            PRICE: electricPrice,
+            COSTID: 2,
+            INVOICEID: invoiceID
+          });
+        } else {
+          await invoiceDetailModel.update({ PRICE: electricPrice },
+            {
+              where: {
+                COSTID: 2,
+                INVOICEID: invoiceID
+              }
+            });
+        }
+
+        if (!isWaterCost) {
+          await invoiceDetailModel.create({
+            PRICE: waterPrice,
+            COSTID: 3,
+            INVOICEID: invoiceID
+          });
+        } else {
+          await invoiceDetailModel.update({ PRICE: waterPrice },
+            {
+              where: {
+                COSTID: 3,
+                INVOICEID: invoiceID
+              }
+            });
+        }
+
+        await invoiceModel.update({
+          TOTALPRICE: await sumPrice(invoiceID),
+          INVOICEDATE: todayDate,
+          VIEWDATE: viewDate
+        },
+          {
+            where: {
+              INVOICEID: invoiceID
+            }
+          }
+        );
+      }
+    }
+
+    const sd = {
+      electricUnit: isAvailable ? 0 : (await unitUsedModel.findOne({
+        attributes: ['ELECTRICIRYUNIT'],
+        where: {
+          UNITUSEDDATE: { [Op.startsWith]: thisBillingCycle },
+          ROOMID: am.roomID
+        }
+      }))
+        .dataValues.ELECTRICIRYUNIT,
+      waterUnit: isAvailable ? 0.000 : (await unitUsedModel.findOne({
+        attributes: ['WATERUNIT'],
+        where: {
+          UNITUSEDDATE: { [Op.startsWith]: thisBillingCycle },
+          ROOMID: am.roomID
+        }
+      }))
+        .dataValues.WATERUNIT
+    };
+
+    const summaryData = {
+      roomNo: await getRoomNoByRoomId(am.roomID),
+      electricUnit: sd.electricUnit,
+      electricPrice: isAvailable ? 0.00 : Number((sd.electricUnit * electricPricePerUnit).toFixed(2)),
+      waterUnit: sd.waterUnit,
+      waterPrice: isAvailable ? 0.00 : sd.waterUnit < minWaterUnit ? minWaterPrice : Number((((sd.electricUnit - minWaterUnit) * electricPricePerUnit) + minWaterPrice).toFixed(2)),
+      totalPrice: isAvailable ? 0.00 : sd.waterUnit < minWaterUnit ?
+        Number(((sd.electricUnit * electricPricePerUnit) + minWaterPrice).toFixed(2)) :
+        Number(((sd.electricUnit * electricPricePerUnit) + (((sd.electricUnit - minWaterUnit) * electricPricePerUnit) + minWaterPrice)).toFixed(2))
+    };
 
     summary.push(summaryData);
 
