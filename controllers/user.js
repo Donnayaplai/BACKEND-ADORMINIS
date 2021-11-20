@@ -168,18 +168,56 @@ const getUserDetail = async (req, res) => {
     if (err) {
       return res.status(400).json({ message: "มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง" });
     } else {
+
+      let user;
+
+      const { USERID: userId, FNAME: fName, LNAME: lName, EMAIL: email, ROLEID: roleId } = await userModel.findOne({
+        attributes: ['USERID', 'FNAME', 'LNAME', 'EMAIL', 'ROLEID'],
+        where: {
+          USERID: userDetail.USERID
+        }
+      });
+
       if (userDetail.ROLEID == 0) {
-        const user = await db.query(userQuery.getResidentDetail, {
+
+        const additionalDetails = await db.query(userQuery.getResidentDetail, {
           replacements: [userDetail.USERID],
           type: db.QueryTypes.SELECT,
         });
-        return res.status(200).send(user[0]);
+
+        user = {
+          USERID: userId,
+          FNAME: fName,
+          LNAME: lName,
+          EMAIL: email,
+          ROLEID: roleId,
+          RENTID: additionalDetails[0] ? additionalDetails[0].RENTID : "",
+          ROOMID: additionalDetails[0] ? additionalDetails[0].ROOMID : "",
+          ROOMNO: additionalDetails[0] ? additionalDetails[0].ROOMNO : "",
+          DORMID: additionalDetails[0] ? additionalDetails[0].DORMID : "",
+          DORMNAMETH: additionalDetails[0] ? additionalDetails[0].DORMNAMETH : ""
+        };
+
+        return res.status(200).send(user);
+
       } else if (userDetail.ROLEID == 1) {
-        user = await db.query(userQuery.getAdminDetail, {
+
+        const additionalDetails = await db.query(userQuery.getAdminDetail, {
           replacements: [userDetail.USERID],
           type: db.QueryTypes.SELECT,
         });
-        return res.status(200).send(user[0]);
+
+        user = {
+          USERID: userId,
+          FNAME: fName,
+          LNAME: lName,
+          EMAIL: email,
+          ROLEID: roleId,
+          DORMID: additionalDetails[0] ? additionalDetails[0].DORMID : "",
+          DORMNAMETH: additionalDetails[0] ? additionalDetails[0].DORMNAMETH : ""
+        };
+
+        return res.status(200).send(user);
       }
     }
   });
