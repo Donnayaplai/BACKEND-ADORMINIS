@@ -1,12 +1,14 @@
 const db = require('../config/dbConnection');
 const buildingModel = require('../models/building');
 const CoRModel = require('../models/contractOfRent');
+const dormModel = require('../models/dorm');
 const listOfCostModel = require('../models/listOfCost');
 const rentModel = require('../models/rent');
 const roomModel = require('../models/room');
 const settingModel = require('../models/setting');
 const userModel = require('../models/user');
 const roomQuery = require('../queries/room');
+const userQuery = require('../queries/user');
 
 const getGuaranteeFee = async (dormID) => {
   const { GUARANTEEFEE: guaranteeFee } = await settingModel.findOne({
@@ -197,8 +199,34 @@ const addUserToRoom = async (req, res) => {
     });
 
     return res.status(200).send(String("Resident has been added to room ID " + roomID));
+
   } else {
-    return res.status(400).json({ message: "ผู้ใช้มีห้องพักอยู่แล้ว" });
+
+    const { USERID: userID } = await userModel.findOne({
+      attributes: ['USERID'],
+      where: {
+        IDCARDNO: idCardNo
+      }
+    });
+
+    const { DORMID: dormID } = (await db.query(
+      userQuery.getResidentDetail,
+      {
+        replacements: [userID],
+        type: db.QueryTypes.SELECT,
+      }
+    ))[0];
+
+    const { DORMNAMETH: dormName, TELNO: dormTelNo } = await dormModel.findOne({
+      attributes: ['DORMNAMETH', 'TELNO'],
+      where: {
+        DORMID: dormID
+      }
+    });
+
+    const stringMessage = String("ผู้ใช้นี้มีห้องพักอยู่แล้วที่ " + dormName + " (ติดต่อ " + dormTelNo + ")");
+
+    return res.status(400).json({ message: stringMessage });
   }
 };
 
