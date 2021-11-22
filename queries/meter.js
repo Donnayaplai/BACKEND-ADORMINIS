@@ -16,5 +16,21 @@ const getOldWaterMeterNo = `
     AND METERDATE < :todayDate
     ORDER BY METERDATE DESC , WMETERID DESC LIMIT 1;
 `
+// Calculate controller
+const getNewElectricMeterNo = `
+    SELECT ELECTRICITYNO 
+    FROM ELECTRICITYMETER 
+    WHERE ROOMID = :roomID 
+    AND METERDATE LIKE :thisBillingCycle
+    ORDER BY EMETERID DESC LIMIT 1;
+`
+// Calculate controller
+const getNewWaterMeterNo = `
+    SELECT WATERNO 
+    FROM WATERMETER 
+    WHERE ROOMID = :roomID 
+    AND METERDATE LIKE :thisBillingCycle
+    ORDER BY WMETERID DESC LIMIT 1;
+`
 
-module.exports = { getOldElectricMeterNo, getOldWaterMeterNo };
+module.exports = { getOldElectricMeterNo, getOldWaterMeterNo, getNewElectricMeterNo, getNewWaterMeterNo };
