@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { getOldMeterNo, calculateAndSummary } = require('../controllers/calculateUtility');
+const { getMeterNo, calculate, getSummaryData } = require('../controllers/calculateUtility');
 
-// Get meter no. of last month
-router.get('/meter/:buildingID', getOldMeterNo);
+// Get meter no.
+router.get('/meter/:buildingID', getMeterNo);
 
-// Calculare unit and price then insert to database and return summary data
-router.post('/:dormID', calculateAndSummary);
+// Calculate unit and price then insert to database and return summary data
+router.post('/:dormID', calculate);
+
+// Get summary from calculation
+router.get('/summary/:buildingID', getSummaryData);
 
 module.exports = router;
