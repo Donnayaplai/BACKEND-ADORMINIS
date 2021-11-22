@@ -5,7 +5,7 @@ const { getMeterNo, calculate, getSummaryData } = require('../controllers/calcul
 // Get meter no.
 router.get('/meter/:buildingID', getMeterNo);
 
-// Calculate unit and price then insert to database and return summary data
+// Calculate unit and price then insert to database
 router.post('/:dormID', calculate);
 
 // Get summary from calculation
