@@ -204,6 +204,22 @@ const getMeterNo = async (req, res) => {
     });
 
     if (arrayRoomWithMeter.length == roomList.length) {
+      function compare(a, b) {
+        if (a.floor < b.floor) {
+          return -1;
+        }
+        if (a.floor > b.floor) {
+          return 1;
+        }
+        if (a.roomNo < b.roomNo) {
+          return -1;
+        }
+        if (a.roomNo > b.roomNo) {
+          return 1;
+        }
+        return 0;
+      }
+      arrayRoomWithMeter.sort(compare)
       return res.status(200).send({ thisBillingCycle, arrayRoomWithMeter });
     }
   })
