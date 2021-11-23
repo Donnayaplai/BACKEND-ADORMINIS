@@ -28,10 +28,10 @@ const verifyUser = async (req, res) => {
     if (dateOfBirth === dbDateOfBirth) {
       return res.status(200).send(userId);
     } else {
-      return res.status(400).json({ message: "กรุณาระบุวันเกิดให้ถูกต้อง" });
+      return res.status(400).json({ message: 'กรุณาระบุวันเกิดให้ถูกต้อง' });
     }
   } else {
-    return res.status(400).json({ message: "ไม่พบผู้ใช้ดังกล่าวในระบบ" });
+    return res.status(400).json({ message: 'ไม่พบผู้ใช้ดังกล่าวในระบบ' });
   }
 };
 
@@ -50,7 +50,7 @@ const residentRegister = async (req, res) => {
     if (user) {
       return res
         .status(400)
-        .json({ message: "อีเมลนี้ถูกใช้งานแล้ว กรุณาลองอีกครั้ง" });
+        .json({ message: 'อีเมลนี้ถูกใช้งานแล้ว กรุณาลองอีกครั้ง' });
     } else {
       // Encrypt password
       const salt = await bcrypt.genSalt(10);
@@ -67,12 +67,12 @@ const residentRegister = async (req, res) => {
           },
         }
       );
-      return res.status(200).send("User registered");
+      return res.status(200).send('User registered');
     }
   } catch (err) {
     return res
       .status(500)
-      .json({ message: "มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง" });
+      .json({ message: 'มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง' });
   }
 };
 
@@ -91,13 +91,13 @@ const adminRegister = async (req, res) => {
     if (user) {
       return res
         .status(400)
-        .json({ message: "อีเมลนี้ถูกใช้งานแล้ว กรุณาลองอีกครั้ง" });
+        .json({ message: 'อีเมลนี้ถูกใช้งานแล้ว กรุณาลองอีกครั้ง' });
     } else {
       // Encrypt password
       const salt = await bcrypt.genSalt(10);
       password = await bcrypt.hash(password, salt);
 
-      let newUser = await userModel.create({
+      await userModel.create({
         FNAME: fName,
         LNAME: lName,
         TELNO: telNo,
@@ -108,12 +108,12 @@ const adminRegister = async (req, res) => {
         PASSWORD: password,
         ROLEID: 1, // Admin
       });
-      return res.status(200).send("User registered");
+      return res.status(200).send('User registered');
     }
   } catch (err) {
     return res
       .status(500)
-      .json({ message: "มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง" });
+      .json({ message: 'มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง' });
   }
 };
 
@@ -128,14 +128,14 @@ const userLogin = async (req, res) => {
     });
 
     if (!user) {
-      res.status(400).json({ message: "ไม่พบผู้ใช้" });
+      res.status(400).json({ message: 'ไม่พบผู้ใช้' });
     }
 
     const dbPassword = user.PASSWORD;
 
     bcrypt.compare(password, dbPassword).then(async (match) => {
       if (!match) {
-        res.status(400).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+        res.status(400).json({ message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
       } else {
         // Return jsonwebtoken
         const payload = await userModel.findOne({
@@ -157,7 +157,7 @@ const userLogin = async (req, res) => {
   } catch (err) {
     return res
       .status(500)
-      .json({ message: "มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง" });
+      .json({ message: 'มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง' });
   }
 };
 
@@ -166,20 +166,26 @@ const getUserDetail = async (req, res) => {
 
   jwt.verify(authorization, process.env.AUTH_KEY, async (err, userDetail) => {
     if (err) {
-      return res.status(400).json({ message: "มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง" });
+      return res
+        .status(400)
+        .json({ message: 'มีข้อผิดพลาดเกิดขึ้น กรุณาลองใหม่อีกครั้ง' });
     } else {
-
       let user;
 
-      const { USERID: userId, FNAME: fName, LNAME: lName, EMAIL: email, ROLEID: roleId } = await userModel.findOne({
+      const {
+        USERID: userId,
+        FNAME: fName,
+        LNAME: lName,
+        EMAIL: email,
+        ROLEID: roleId,
+      } = await userModel.findOne({
         attributes: ['USERID', 'FNAME', 'LNAME', 'EMAIL', 'ROLEID'],
         where: {
-          USERID: userDetail.USERID
-        }
+          USERID: userDetail.USERID,
+        },
       });
 
       if (userDetail.ROLEID == 0) {
-
         const additionalDetails = await db.query(userQuery.getResidentDetail, {
           replacements: [userDetail.USERID],
           type: db.QueryTypes.SELECT,
@@ -191,17 +197,17 @@ const getUserDetail = async (req, res) => {
           LNAME: lName,
           EMAIL: email,
           ROLEID: roleId,
-          RENTID: additionalDetails[0] ? additionalDetails[0].RENTID : "",
-          ROOMID: additionalDetails[0] ? additionalDetails[0].ROOMID : "",
-          ROOMNO: additionalDetails[0] ? additionalDetails[0].ROOMNO : "",
-          DORMID: additionalDetails[0] ? additionalDetails[0].DORMID : "",
-          DORMNAMETH: additionalDetails[0] ? additionalDetails[0].DORMNAMETH : ""
+          RENTID: additionalDetails[0] ? additionalDetails[0].RENTID : '',
+          ROOMID: additionalDetails[0] ? additionalDetails[0].ROOMID : '',
+          ROOMNO: additionalDetails[0] ? additionalDetails[0].ROOMNO : '',
+          DORMID: additionalDetails[0] ? additionalDetails[0].DORMID : '',
+          DORMNAMETH: additionalDetails[0]
+            ? additionalDetails[0].DORMNAMETH
+            : '',
         };
 
         return res.status(200).send(user);
-
       } else if (userDetail.ROLEID == 1) {
-
         const additionalDetails = await db.query(userQuery.getAdminDetail, {
           replacements: [userDetail.USERID],
           type: db.QueryTypes.SELECT,
@@ -213,8 +219,10 @@ const getUserDetail = async (req, res) => {
           LNAME: lName,
           EMAIL: email,
           ROLEID: roleId,
-          DORMID: additionalDetails[0] ? additionalDetails[0].DORMID : "",
-          DORMNAMETH: additionalDetails[0] ? additionalDetails[0].DORMNAMETH : ""
+          DORMID: additionalDetails[0] ? additionalDetails[0].DORMID : '',
+          DORMNAMETH: additionalDetails[0]
+            ? additionalDetails[0].DORMNAMETH
+            : '',
         };
 
         return res.status(200).send(user);
@@ -313,7 +321,7 @@ const editUser = async (req, res) => {
 
   return res
     .status(200)
-    .send(String("Information has been updated to user ID " + userID));
+    .send(String('Information has been updated to user ID ' + userID));
 };
 
 const isFirstLogin = async (req, res) => {
@@ -321,13 +329,15 @@ const isFirstLogin = async (req, res) => {
 
   const manage = await manageModel.findOne({
     where: {
-      USERID: userID
-    }
+      USERID: userID,
+    },
   });
 
   if (manage) {
+    console.log(manage);
     return res.status(200).send(true);
   } else {
+    console.log('testttt');
     return res.status(200).send(false); // First time
   }
 };
@@ -340,5 +350,5 @@ module.exports = {
   getUserDetail,
   getUserInfo,
   editUser,
-  isFirstLogin
+  isFirstLogin,
 };
