@@ -108,6 +108,22 @@ const getAdminComplaintList = async (req, res) => {
         });
 
         if (adminComplaintList.length == complaintList.length) {
+            function compare(a, b) {
+                if (a.INFORMEDDATE < b.INFORMEDDATE) {
+                    return 1;
+                }
+                if (a.INFORMEDDATE > b.INFORMEDDATE) {
+                    return -1;
+                }
+                if (a.PROBLEMID < b.PROBLEMID) {
+                    return 1;
+                }
+                if (a.PROBLEMID > b.PROBLEMID) {
+                    return -1;
+                }
+                return 0;
+            }
+            adminComplaintList.sort(compare)
             return res.status(200).send(adminComplaintList);
         }
     });
