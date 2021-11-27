@@ -38,6 +38,18 @@ const getListOfRoomInSetting = `
     ON r.ROOMTYPEID = rt.ROOMTYPEID 
     WHERE b.DORMID = ? ;
 `
+// Room controller
+const getListOfRoomInRoom = `
+    SELECT r.ROOMID , r.ROOMNO , r.FLOOR , r.STATUS , r.BUILDINGID , b.BUILDINGNAME , r.ROOMTYPEID , rt.ROOMNAME 
+    FROM ROOM r 
+    JOIN BUILDING b 
+    ON r.BUILDINGID = b.BUILDINGID 
+    JOIN DORMITORY d 
+    ON b.DORMID = d.DORMID 
+    JOIN ROOM_TYPE rt 
+    ON r.ROOMTYPEID = rt.ROOMTYPEID 
+    WHERE b.BUILDINGID = ? ;
+`
 // Dashboard controller
 const countAllRoom = `
     SELECT COUNT(r.ROOMID) AS "room"
@@ -84,4 +96,4 @@ const countResident = `
     AND r.CHECKOUTDATE IS NULL;
 `
 
-module.exports = { getRoomListByBuildingID, getRoomPrice, getListOfNotAvailableRoom, getListOfRoomInSetting, countAllRoom, countAvailableRoom, countNotAvailableRoom, countResident };
+module.exports = { getRoomListByBuildingID, getRoomPrice, getListOfNotAvailableRoom, getListOfRoomInSetting, getListOfRoomInRoom, countAllRoom, countAvailableRoom, countNotAvailableRoom, countResident };

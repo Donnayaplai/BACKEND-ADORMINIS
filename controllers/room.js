@@ -1,7 +1,9 @@
+const db = require('../config/dbConnection');
 const listOfCostModel = require('../models/listOfCost');
 const roomModel = require('../models/room');
 const roomTypeModel = require('../models/roomType');
 const settingModel = require('../models/setting')
+const roomQuery = require('../queries/room');
 
 const getRoomNo = async (roomID) => {
   const { ROOMNO: roomNo } = await roomModel.findOne({
@@ -40,14 +42,16 @@ const getDormSetting = async (dormID) => {
   return setting.dataValues;
 };
 
-const getAllRoomByBuildingID = (req, res) => {
+const getAllRoomByBuildingID = async (req, res) => {
   const { buildingID } = req.params;
 
-  roomModel.findAll({
-    where: {
-      BUILDINGID: buildingID
+  await db.query(
+    roomQuery.getListOfRoomInRoom,
+    {
+      replacements: [buildingID],
+      type: db.QueryTypes.SELECT,
     }
-  })
+  )
     .then((data) => {
       return res.status(200).send(data);
     })
