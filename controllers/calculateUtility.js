@@ -14,19 +14,7 @@ const todayDate = new Date().toISOString().slice(0, 10);
 const thisBillingYear = todayDate.slice(0, 4);
 const thisBillingMonth = todayDate.slice(5, 7);
 const thisBillingCycle = todayDate.slice(0, 7);
-let previousBillingCycle;
 let nextBillingCycle;
-
-if (thisBillingMonth == 1) {
-  let year = Number(thisBillingYear) - 1
-  let month = 12
-  previousBillingCycle = year + '-' + month
-} else {
-  let year = thisBillingYear
-  let month = Number(thisBillingMonth) - 1
-  if (month < 10) { month = '0' + month }
-  previousBillingCycle = year + '-' + month
-}
 
 if (thisBillingMonth == 12) {
   let year = Number(thisBillingYear) + 1
