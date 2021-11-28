@@ -57,7 +57,7 @@ const getOldElectricMeterNo = async (roomID, thisBillingCycle) => {
       type: db.QueryTypes.SELECT
     }
   );
-  return electricMeterNo[0].ELECTRICITYNO;
+  return electricMeterNo[0] ? electricMeterNo[0].ELECTRICITYNO : 0;
 };
 
 const getOldWaterMeterNo = async (roomID, thisBillingCycle) => {
@@ -68,7 +68,7 @@ const getOldWaterMeterNo = async (roomID, thisBillingCycle) => {
       type: db.QueryTypes.SELECT
     }
   );
-  return waterMeterNo[0].WATERNO;
+  return waterMeterNo[0] ? waterMeterNo[0].WATERNO : 0;
 };
 
 const getNewElectricMeterNo = async (roomID, thisBillingCycle) => {
@@ -233,9 +233,9 @@ const calculate = async (req, res) => {
   const waterPricePerUnit = await getWaterPricePerUnit(dormID);
   const minWaterUnit = await getMinWaterUnit(dormID);
   const minWaterPrice = await getMinWaterPrice(dormID);
-  const oldElectricMeterNo = await getOldElectricMeterNo(roomID, previousBillingCycle);
+  const oldElectricMeterNo = await getOldElectricMeterNo(roomID, thisBillingCycle);
   let thisElectricMeterNo = electricMeterNo ? Number(electricMeterNo) : oldElectricMeterNo;
-  const oldWaterMeterNo = await getOldWaterMeterNo(roomID, previousBillingCycle);
+  const oldWaterMeterNo = await getOldWaterMeterNo(roomID, thisBillingCycle);
   let thisWaterMeterNo = waterMeterNo ? Number(waterMeterNo) : oldWaterMeterNo;
   let viewDate;
 
