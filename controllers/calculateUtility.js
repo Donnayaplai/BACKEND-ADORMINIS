@@ -248,7 +248,9 @@ const calculate = async (req, res) => {
   let waterUnit = 0;
 
   if (thisElectricMeterNo < oldElectricMeterNo) {
-    if ((String(oldElectricMeterNo).split("."))[0].length == 4) {
+    if (String(oldElectricMeterNo).slice(0, 1) !== "9") {
+      return res.status(400).json({ message: 'เลขมิเตอร์ไฟฟ้าไม่ถูกต้อง' });
+    } else if ((String(oldElectricMeterNo).split("."))[0].length == 4) {
       thisElectricMeterNo += 9999.0;
     } else if ((String(oldElectricMeterNo).split("."))[0].length == 5) {
       thisElectricMeterNo += 99999.0;
@@ -263,9 +265,12 @@ const calculate = async (req, res) => {
   }
 
   if (thisWaterMeterNo < oldWaterMeterNo) {
-    thisWaterMeterNo += 9999.000;
-    waterUnit = thisWaterMeterNo - oldWaterMeterNo;
-
+    if (String(oldWaterMeterNo).slice(0, 1) !== "9") {
+      return res.status(400).json({ message: 'เลขมิเตอร์น้ำไม่ถูกต้อง' });
+    } else {
+      thisWaterMeterNo += 9999.000;
+      waterUnit = thisWaterMeterNo - oldWaterMeterNo;
+    }
   } else if (thisWaterMeterNo > oldWaterMeterNo) {
     waterUnit = thisWaterMeterNo - oldWaterMeterNo;
 
